@@ -1,87 +1,61 @@
 
 # RVE(Ray-traced Voxel Engine)
 
-A voxel-based ray-tracing engine built from scratch in Rust
+A voxel-based ray-tracing engine built from scratch in Rust using WebGPU
 
 ---
 
-## Stack
+## Why
 
-| Layer | Tool |
-|---|---|
-| Language | Rust|
-| GPU Abstraction | `wgpu` |
-| Shaders | WGSL  |
-| Windowing / Input | `winit` |
-| Debug UI | `egui` |
+### Rust + WebGPU?
 
----
+Stack wise, I chose Rust + WebGPU as I really want to learn more about the lower
+level areas of game engines, how they interact with the hardware,
+and the algorithms used.
 
-## Progress
+I personally love to learn from a lower-level standing, then using those building
+blocks for further abstractions. This is the main reason I'm using such a
+low-level API alongside rust, alongside wanting this to be **BLAZINGLY FAST**.
 
-### Phase 1 — Foundation
+### Voxel + Ray-traced?
 
-- [ ] wgpu device + surface setup
-- [ ] `winit` event loop with resize handling
-- [ ] Fullscreen quad render pass
-- [ ] Basic compute shader writing solid color to output texture
-- [ ] Camera uniform buffer + ray generation in shader
+I've made a few engines in the past, including a ray-tracer,
+simple sequential processing engine, a not-so-great vulkan voxel engine,
+and a decently performant OpenGL engine.
 
-### Phase 2 — Voxel Traversal
-
-- [ ] Flat voxel grid in GPU storage buffer
-- [ ] DDA traversal in WGSL — first hit detection
-- [ ] Normal-based shading (color by face direction)
-- [ ] Diffuse lighting with a single directional light
-
-### Phase 3 — World Structure
-
-- [ ] Chunk system (32x32x32 per chunk)
-- [ ] CPU-side chunk registry with dirty flagging
-- [ ] Procedural world gen (CPU) → upload to GPU
-- [ ] Skip empty chunks during traversal
-
-### Phase 4 — Optimization
-
-- [ ] BVH over chunks (skip empty regions fast)
-- [ ] Sparse Voxel Octree (SVO) — replace flat grid
-- [ ] Shader hot-reload (`naga` / file watcher)
-- [ ] Frame timing + GPU profiling overlay (egui)
-
-### Phase 5 — Visual Features
-
-- [ ] Shadow rays (secondary ray per hit)
-- [ ] Ambient occlusion (cone sampling)
-- [ ] Reflective materials
-- [ ] Transparency + refraction
-- [ ] Sky / atmosphere shader
-
-### Phase 6 — Stretch Goals
-
-- [ ] Global illumination (path tracing mode)
-- [ ] Dynamic voxel editing at runtime
-- [ ] WebGPU target (WASM build)
-- [ ] Chunk streaming from disk
+The reason I'm making this engine is so I can learn more about how voxel
+engines work as well as ray-tracing.
 
 ---
 
-## Build & Run
+## Future
 
-```bash
-# Debug build (fast compile, slow runtime)
-cargo run
-
-# Release build (optimized — use for actual rendering)
-cargo run --release
-
-# Run with validation layers enabled (catches GPU errors)
-WGPU_BACKEND=vulkan cargo run
-```
-
-**Requirements:**
-
-- Rust 1.75+
-- A GPU with Vulkan, Metal, or DX12 support
-- `wgpu`, `winit`, `egui` — all pulled via `Cargo.toml`
+While you may think I'm stupid (you'd be right), and naive (doubly correct),
+I have future aspirations for using this project for a game idea I have in
+the future. I would love for this to be a cargo package that I can take
+advantage of when the time comes
 
 ---
+
+## Files
+
+I will be initially following a [tutorial](https://webgpufundamentals.org/webgpu/lessons/webgpu-fundamentals.html),
+I will be taking noes about each section in WebGPUFundamentalsNotes/
+On top of this, I will also be taking notes of each week in Journey/
+
+---
+
+## AI usage
+
+I will refuse to use it in this project to generate code.
+While I'm not against AI, I do believe it strips away the learning-aspect
+and joy of programming.
+
+This projects main product is not to product a product, its about
+learning and growing as a software engineer.
+
+---
+
+## Big thanks to
+
+<https://webgpufundamentals.org/>

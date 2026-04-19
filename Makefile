@@ -1,42 +1,30 @@
-# RVE Makefile - Ray-traced Voxel Engine
+CXX      := nvcc
+CXXFLAGS := -arch=native -std=c++20
+LIBS     := -lSDL2
 
-# Use nvcc - CUDA is the core of this project
-CXX     = nvcc
-LDFLAGS = -lglfw -lGL -ldl -lpthread
-SRCDIR  = src
-BINDIR  = bin
+SRC_DIR  := src
+OBJ_DIR  := obj
+BIN_DIR  := bin
 
-SOURCES = $(wildcard $(SRCDIR)/*.cpp)
-OBJECTS = $(SOURCES:src/%.cpp=obj/%.o)
+SRCS     := $(wildcard $(SRC_DIR)/*.cu)
+OBJS     := $(SRCS:$(SRC_DIR)/%.cu=$(OBJ_DIR)/%.o)
+TARGET   := $(BIN_DIR)/rve
 
-# All the flags
-CXXFLAGS = -O3 -arch=native \
-           -Xcompiler "-Wall -Wextra -ffast-math -funroll-loops -ftree-vectorize -fstack-protector-strong"
+all: $(TARGET)
 
-.PHONY: all debug clean run
+$(TARGET): $(OBJS) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 
-all: $(BINDIR)/rve
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cu | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(BINDIR)/rve: obj/main.o obj/window.o | $(BINDIR)
-	$(CXX) $^ -o $@ $(LDFLAGS)
+$(BIN_DIR) $(OBJ_DIR):
+	mkdir -p $@
 
-debug: CXXFLAGS = -O0 -g -DDEBUG -arch=native -Xcompiler "-Wall -Wextra"
-debug: $(BINDIR)/rve_debug
-
-$(BINDIR)/rve_debug: obj/main.o obj/window.o | $(BINDIR)
-	$(CXX) $^ -o $@ $(LDFLAGS)
-
-$(BINDIR):
-	@mkdir -p $@
-
-obj:
-	@mkdir -p $@
-
-obj/%.o: src/%.cpp | obj
-	$(CXX) $(CXXFLAGS) -x cu -Isrc -c $< -o $@
-
-run: all
-	./$(BINDIR)/rve
+run: $(TARGET)
+	./$(TARGET)
 
 clean:
-	rm -rf obj $(BINDIR)
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
+
+.PHONY: all clean run

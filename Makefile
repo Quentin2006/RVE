@@ -1,5 +1,5 @@
 CXX      := nvcc
-CXXFLAGS := -arch=native -std=c++20
+CXXFLAGS := -std=c++20
 LIBS     := -lSDL2
 
 SRC_DIR  := src

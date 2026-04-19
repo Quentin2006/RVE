@@ -1,0 +1,5 @@
+#define BLOCK_SIZE 256
+#define WIDTH 800
+#define HEIGHT 800
+#define SIZE WIDTH *HEIGHT
+#define NUM_BLOCKS (SIZE + BLOCK_SIZE - 1) / BLOCK_SIZE

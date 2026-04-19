@@ -1,4 +1,4 @@
-#include "Window.h"
+#include "Window.cuh"
 #include <cstdint>
 
 Window::Window(uint32_t _width, uint32_t _height)
@@ -24,6 +24,7 @@ Window::~Window() {
   SDL_Quit();
 }
 
+// NOTE: is is exspected that his will take in an array of size WIDTH*HEIGHT
 void Window::present(const uint32_t *pixels) {
   SDL_Event event;
   while (SDL_PollEvent(&event) != 0) {

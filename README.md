@@ -15,7 +15,7 @@ and the algorithms used.
 
 I personally love to learn from a lower-level standing, then using those building
 blocks for further abstractions. This is the main reason I'm using such a
-low-level API alongside rust, alongside wanting this to be **BLAZINGLY FAST**.
+low-level API , alongside wanting this to be **BLAZINGLY FAST**.
 
 ### Voxel + Ray-traced?
 

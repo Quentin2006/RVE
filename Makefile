@@ -1,23 +1,17 @@
 # RVE Makefile - Ray-traced Voxel Engine
 
-CXX     = g++
-LDFLAGS = -lglfw
+# Use nvcc - CUDA is the core of this project
+CXX     = nvcc
+LDFLAGS = -lglfw -lGL -ldl -lpthread
 SRCDIR  = src
 BINDIR  = bin
 
 SOURCES = $(wildcard $(SRCDIR)/*.cpp)
 OBJECTS = $(SOURCES:src/%.cpp=obj/%.o)
 
-CXXFLAGS_WARN   = -Wall -Wextra -Wpedantic -Wconversion -Wshadow \
-                 -Wcast-align -Wcast-qual -Wunused -Wuninitialized \
-                 -Wmissing-declarations -Wmissing-include-dirs \
-                 -Wswitch-default -Wswitch-enum -Wtype-limits
-
-CXXFLAGS_OPT   = -O3 -march=native -mtune=native -ffast-math \
-                 -funroll-loops -ftree-vectorize -flto -fno-semantic-interposition
-
-
-CXXFLAGS       = -std=c++17 $(CXXFLAGS_WARN) $(CXXFLAGS_OPT)
+# All the flags
+CXXFLAGS = -O3 -arch=native \
+           -Xcompiler "-Wall -Wextra -ffast-math -funroll-loops -ftree-vectorize -fstack-protector-strong"
 
 .PHONY: all debug clean run
 
@@ -26,7 +20,7 @@ all: $(BINDIR)/rve
 $(BINDIR)/rve: obj/main.o obj/window.o | $(BINDIR)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
-debug: CXXFLAGS = $(CXXFLAGS_COMMON) -O0 -g -DDEBUG
+debug: CXXFLAGS = -O0 -g -DDEBUG -arch=native -Xcompiler "-Wall -Wextra"
 debug: $(BINDIR)/rve_debug
 
 $(BINDIR)/rve_debug: obj/main.o obj/window.o | $(BINDIR)
@@ -39,7 +33,7 @@ obj:
 	@mkdir -p $@
 
 obj/%.o: src/%.cpp | obj
-	$(CXX) $(CXXFLAGS) -Isrc -c $< -o $@
+	$(CXX) $(CXXFLAGS) -x cu -Isrc -c $< -o $@
 
 run: all
 	./$(BINDIR)/rve

@@ -7,13 +7,13 @@ class Window {
 public:
   Window(int width, int height, const std::string &title);
 
-  int getWidth() { return width; }
-  int getHeight() { return height; }
+  [[nodiscard]] int getWidth() const { return width; }
+  [[nodiscard]] int getHeight() const { return height; }
 
   void setWidth(int width_) { width = width_; }
   void setHeight(int height_) { height = height_; }
 
-  bool shouldClose() { return glfwWindowShouldClose(window); }
+  bool shouldClose() { return glfwWindowShouldClose(window) != 0; }
 
   void swapBuffers() {
     glfwPollEvents();

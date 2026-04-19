@@ -2,17 +2,17 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-Window::Window(int w, int h, const std::string &t) : width(w), height(h) {
+Window::Window(int _width, int _height, const std::string &_title)
+    : window(
+          glfwCreateWindow(_width, _height, _title.c_str(), nullptr, nullptr)),
+      width(_width), height(_height) {
+
   glfwInit();
-  // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  // glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_FALSE);
 
-  window = glfwCreateWindow(w, h, t.c_str(), NULL, NULL);
-  glfwSetWindowSize(window, w, h);
+  glfwSetWindowSize(window, _width, _height);
 
-  if (window == NULL) {
-    std::cerr << "Failed to create GLFW window" << std::endl;
+  if (window == nullptr) {
+    std::cerr << "Failed to create GLFW window" << '\n';
     glfwTerminate();
   } else {
     glfwMakeContextCurrent(window);

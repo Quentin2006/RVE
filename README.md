@@ -1,15 +1,15 @@
 
 # RVE(Ray-traced Voxel Engine)
 
-A voxel-based ray-tracing engine built from scratch in Rust using WebGPU
+A voxel-based ray-tracing engine built from scratch in C++ using CUDA
 
 ---
 
 ## Why
 
-### Rust + WebGPU?
+### CUDA?
 
-Stack wise, I chose Rust + WebGPU as I really want to learn more about the lower
+Stack wise, I chose CUDA  as I really want to learn more about the lower
 level areas of game engines, how they interact with the hardware,
 and the algorithms used.
 
@@ -37,14 +37,6 @@ advantage of when the time comes
 
 ---
 
-## Files
-
-I will be initially following a [tutorial](https://webgpufundamentals.org/webgpu/lessons/webgpu-fundamentals.html),
-I will be taking noes about each section in WebGPUFundamentalsNotes/
-On top of this, I will also be taking notes of each week in Journey/
-
----
-
 ## AI usage
 
 I will refuse to use it in this project to generate code.
@@ -58,4 +50,5 @@ learning and growing as a software engineer.
 
 ## Big thanks to
 
-<https://webgpufundamentals.org/>
+<https://www.youtube.com/watch?v=86FAWCzIe_4&list=WL&index=3>
+<https://raytracing.github.io/books/RayTracingInOneWeekend.html>

@@ -1,8 +1,14 @@
-#include <SDL2/SDL.h>
+#include "SDL_render.h"
+#include "SDL_video.h"
 #include <cstdint>
 
 class Window {
 public:
+  Window(const Window &) = default;
+  Window(Window &&) = delete;
+  Window &operator=(const Window &) = default;
+  Window &operator=(Window &&) = delete;
+
   Window(uint32_t width, uint32_t height);
   ~Window();
 

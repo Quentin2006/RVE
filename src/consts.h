@@ -1,5 +1,7 @@
-#define BLOCK_SIZE 256
-#define WIDTH 800
-#define HEIGHT 800
-#define SIZE WIDTH *HEIGHT
-#define NUM_BLOCKS (SIZE + BLOCK_SIZE - 1) / BLOCK_SIZE
+#pragma once
+
+constexpr int BLOCK_SIZE = 256;
+constexpr int WIDTH = 800;
+constexpr int HEIGHT = 800;
+constexpr int SIZE = WIDTH * HEIGHT;
+constexpr int NUM_BLOCKS = (SIZE + BLOCK_SIZE - 1) / BLOCK_SIZE;

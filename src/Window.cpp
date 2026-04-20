@@ -1,4 +1,10 @@
-#include "Window.cuh"
+#include "Window.h"
+#include "SDL.h"
+#include "SDL_events.h"
+#include "SDL_keycode.h"
+#include "SDL_pixels.h"
+#include "SDL_render.h"
+#include "SDL_video.h"
 #include <cstdint>
 
 Window::Window(uint32_t _width, uint32_t _height)
@@ -28,10 +34,12 @@ Window::~Window() {
 void Window::present(const uint32_t *pixels) {
   SDL_Event event;
   while (SDL_PollEvent(&event) != 0) {
-    if (event.type == SDL_QUIT)
+    if (event.type == SDL_QUIT) {
       running = false;
-    if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)
+    }
+    if (SDL_KEYDOWN == event.type && event.key.keysym.sym == SDLK_ESCAPE) {
       running = false;
+    }
   }
 
   SDL_UpdateTexture(texture, nullptr, pixels, (int)(width * sizeof(uint32_t)));

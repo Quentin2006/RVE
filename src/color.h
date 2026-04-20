@@ -1,1 +1,1 @@
-#define RGB_TO_HEX(r, g, b) ((r << 16) | (g << 8) | b)
+#define VEC3_TO_HEX(v) ((v.r << 16) | (v.g << 8) | v.b)

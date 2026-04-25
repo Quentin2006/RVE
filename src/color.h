@@ -13,8 +13,9 @@ public:
    * @param color float [0-1]
    * @return hex value
    */
-  uint32_t convert() {
-    return ((uint32_t)r * 255 << 16) + ((uint32_t)g * 255 << 8) +
-           (uint32_t)b * 255;
+  uint32_t convert() const {
+    return (static_cast<uint32_t>(r * 255.0f) << 16) |
+           (static_cast<uint32_t>(g * 255.0f) << 8) |
+           static_cast<uint32_t>(b * 255.0f);
   }
 };

@@ -4,6 +4,7 @@
 
 #include <array>
 #include <glm/glm.hpp>
+#include <iostream>
 
 int main() {
 
@@ -11,11 +12,19 @@ int main() {
 
   std::array<uint32_t, window::SIZE> pixels;
 
-  color white(1.f, 1.f, 1.f);
-
-  pixels.fill(white.convert());
-
   while (!window.should_close()) {
+
+    for (int j = 0; j < window::HEIGHT; j++) {
+      std::clog << "\rScanlines remaining: " << (window::HEIGHT - j) << ' '
+                << std::flush;
+      for (int i = 0; i < window::WIDTH; i++) {
+        color pixel_color = color(double(i) / (window::WIDTH - 1),
+                                  double(j) / (window::HEIGHT - 1), 0);
+
+        pixels[j * window::WIDTH + i] = pixel_color.convert();
+      }
+    }
+
     window.present(pixels);
   }
 

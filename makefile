@@ -4,7 +4,7 @@ CXX       := g++
 SRC_DIR   := src
 OBJ_DIR   := obj
 BIN_DIR   := bin
-INCLUDES  := -I/usr/include/SDL2 -I/usr/include/glm
+INCLUDES  := -I/usr/include/SDL2 -I/usr/include/glm -I/opt/cuda/include
 LIBS      := -lSDL2 -lm
 
 CXXFLAGS  := -std=c++20 -Wall -Wextra -Wpedantic -Wshadow -Wconversion \

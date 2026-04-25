@@ -1,11 +1,4 @@
-#include "Window.h"
-#include "SDL.h"
-#include "SDL_events.h"
-#include "SDL_keycode.h"
-#include "SDL_pixels.h"
-#include "SDL_render.h"
-#include "SDL_video.h"
-#include <cstdint>
+#include "window.h"
 
 Window::Window(uint32_t _width, uint32_t _height)
     : window(SDL_CreateWindow("RVE", SDL_WINDOWPOS_CENTERED,
@@ -30,8 +23,12 @@ Window::~Window() {
   SDL_Quit();
 }
 
-// NOTE: is is exspected that his will take in an array of size WIDTH*HEIGHT
-void Window::present(const uint32_t *pixels) {
+/**
+ * @brief Will upload and render the passed array of pixels
+ *
+ * @param pixels pixels to be rendered, must be size WIDHT*HEIGHT
+ */
+void Window::present(const std::array<uint32_t, window::SIZE> &pixels) {
   SDL_Event event;
   while (SDL_PollEvent(&event) != 0) {
     if (event.type == SDL_QUIT) {
@@ -42,7 +39,8 @@ void Window::present(const uint32_t *pixels) {
     }
   }
 
-  SDL_UpdateTexture(texture, nullptr, pixels, (int)(width * sizeof(uint32_t)));
+  SDL_UpdateTexture(texture, nullptr, pixels.data(),
+                    (int)(width * sizeof(uint32_t)));
   SDL_RenderClear(renderer);
   SDL_RenderCopy(renderer, texture, nullptr, nullptr);
   SDL_RenderPresent(renderer);

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ray.h"
 #include <glm/glm.hpp>
 

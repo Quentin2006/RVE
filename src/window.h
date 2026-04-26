@@ -1,3 +1,5 @@
+#pragma once
+
 #include "consts.h"
 #include <SDL2/SDL.h>
 #include <array>

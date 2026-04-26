@@ -1,88 +1,25 @@
 #include "color.h"
 #include "consts.h"
+#include "cube.h"
 #include "ray.h"
 #include "window.h"
 
-#include <algorithm>
 #include <array>
 #include <glm/geometric.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
+#include <vector>
 
-vec3 hit_cube(const point3 &center, const ray &r) {
-  // 1. Compute the two t values where the ray crosses the two planes:
-  //     t0 = (boxMin.axis - rayOrigin.axis) / rayDir.axis;
-  //     t1 = (boxMax.axis - rayOrigin.axis) / rayDir.axis;
-  //
-  // 2. If needed, swap them so t0 is the entry and t1 is the exit:
-  //     if (t0 > t1) swap(t0, t1);
-  //
-  // 3. Keep the overlap of all three axes:
-  //     tmin = max(tmin, t0);
-  //     tmax = min(tmax, t1);
-  //
-  // 4. If at any point tmax < tmin, the ray misses the cube.
-
-  // calc the cubes x, y and z points, the size will always be 1x1
-  // https://www.math.brown.edu/tbanchof/Beyond3d/chapter8/section01.html
-  const float eps = 0.0001f;
-  point3 boxMin(-0.5, -0.5, -0.5);
-  point3 boxMax(0.5, 0.5, 0.5);
-  boxMin -= center;
-  boxMax -= center;
-
-  float tmin = -std::numeric_limits<float>::infinity();
-  float tmax = std::numeric_limits<float>::infinity();
-
-  vec3 normal(0, 0, 0);
-  for (int i = 0; i < 3; ++i) {
-    float dir = r.direction()[i];
-    float orig = r.origin()[i];
-
-    float t0 = (boxMin[i] - orig) / dir;
-    float t1 = (boxMax[i] - orig) / dir;
-
-    if (t0 > t1)
-      std::swap(t0, t1);
-
-    tmin = std::max(tmin, t0);
-    tmax = std::min(tmax, t1);
-
-    if (tmax < tmin) {
-      return vec3(0, 0, 0);
-    }
-
-    float thit;
-    if (tmin > 0) {
-      thit = tmin;
-    } else {
-      thit = tmax;
-    }
-    point3 p = r.at(thit);
-    if (std::abs(p.x - boxMin.x) < eps)
-      normal = vec3(-1, 0, 0);
-    else if (std::abs(p.x - boxMax.x) < eps)
-      normal = vec3(1, 0, 0);
-    else if (std::abs(p.y - boxMin.y) < eps)
-      normal = vec3(0, -1, 0);
-    else if (std::abs(p.y - boxMax.y) < eps)
-      normal = vec3(0, 1, 0);
-    else if (std::abs(p.z - boxMin.z) < eps)
-      normal = vec3(0, 0, -1);
-    else if (std::abs(p.z - boxMax.z) < eps)
-      normal = vec3(0, 0, 1);
-  }
-
-  return normal;
-}
+std::vector<Cube> scene;
 
 color ray_color(const ray &r) {
 
-  vec3 normal = hit_cube(point3(1, 1, -5), r);
+  for (const auto &cube : scene) {
+    vec3 normal = cube.is_hit(r);
 
-  if (normal != vec3(0, 0, 0)) {
-    std::cerr << normal.x << normal.y << normal.z << std::endl;
-    return color(normal.x, normal.y, normal.z);
+    if (normal != vec3(0, 0, 0)) {
+      return color(normal.x, normal.y, normal.z);
+    }
   }
 
   vec3 unit_direction = glm::normalize(r.direction());
@@ -91,6 +28,11 @@ color ray_color(const ray &r) {
 }
 
 int main() {
+
+  scene.push_back(Cube(0, 0, -5));
+  scene.push_back(Cube(0, 1, -5));
+  scene.push_back(Cube(0, 2, -5));
+  scene.push_back(Cube(1, 1, -5));
 
   Window window{window::WIDTH, window::HEIGHT};
 

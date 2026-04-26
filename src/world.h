@@ -11,6 +11,9 @@ public:
   auto begin() const { return world.begin(); }
   auto end() const { return world.end(); }
 
+  auto begin() { return world.begin(); }
+  auto end() { return world.end(); }
+
 private:
   std::vector<std::unique_ptr<Cube>> world;
 };

@@ -34,9 +34,6 @@ void Window::present(const std::array<uint32_t, window::SIZE> &pixels) {
     if (event.type == SDL_QUIT) {
       running = false;
     }
-    if (SDL_KEYDOWN == event.type && event.key.keysym.sym == SDLK_ESCAPE) {
-      running = false;
-    }
   }
 
   SDL_UpdateTexture(texture, nullptr, pixels.data(),

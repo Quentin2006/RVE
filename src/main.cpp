@@ -6,9 +6,6 @@
 #include <array>
 #include <glm/geometric.hpp>
 #include <glm/glm.hpp>
-#include <vector>
-
-std::vector<Cube> scene;
 
 int main() {
 
@@ -23,9 +20,31 @@ int main() {
   Window window{window::WIDTH, window::HEIGHT};
 
   std::array<uint32_t, window::SIZE> pixels;
-
   while (!window.should_close()) {
+    SDL_PumpEvents();
+    const Uint8 *keys = SDL_GetKeyboardState(nullptr);
+
+    if (keys[SDL_SCANCODE_W] != 0U) {
+      camera.moveForward(-0.1f);
+    }
+    if (keys[SDL_SCANCODE_S] != 0U) {
+      camera.moveForward(0.1f);
+    }
+    if (keys[SDL_SCANCODE_D] != 0U) {
+      camera.moveRight(-0.1f);
+    }
+    if (keys[SDL_SCANCODE_A] != 0U) {
+      camera.moveRight(0.1f);
+    }
+    if (keys[SDL_SCANCODE_SPACE] != 0U) {
+      camera.moveUp(-0.1f);
+    }
+    if (keys[SDL_SCANCODE_LSHIFT] != 0U) {
+      camera.moveUp(0.1f);
+    }
+
     camera.render(world, pixels);
+
     window.present(pixels);
   }
 

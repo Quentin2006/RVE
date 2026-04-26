@@ -9,7 +9,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 
-bool hit_cube(const point3 &center, const ray &r) {
+vec3 hit_cube(const point3 &center, const ray &r) {
   // 1. Compute the two t values where the ray crosses the two planes:
   //     t0 = (boxMin.axis - rayOrigin.axis) / rayDir.axis;
   //     t1 = (boxMax.axis - rayOrigin.axis) / rayDir.axis;
@@ -25,6 +25,7 @@ bool hit_cube(const point3 &center, const ray &r) {
 
   // calc the cubes x, y and z points, the size will always be 1x1
   // https://www.math.brown.edu/tbanchof/Beyond3d/chapter8/section01.html
+  const float eps = 0.0001f;
   point3 boxMin(-0.5, -0.5, -0.5);
   point3 boxMax(0.5, 0.5, 0.5);
   boxMin -= center;
@@ -33,6 +34,7 @@ bool hit_cube(const point3 &center, const ray &r) {
   float tmin = -std::numeric_limits<float>::infinity();
   float tmax = std::numeric_limits<float>::infinity();
 
+  vec3 normal(0, 0, 0);
   for (int i = 0; i < 3; ++i) {
     float dir = r.direction()[i];
     float orig = r.origin()[i];
@@ -47,17 +49,41 @@ bool hit_cube(const point3 &center, const ray &r) {
     tmax = std::min(tmax, t1);
 
     if (tmax < tmin) {
-      return false;
+      return vec3(0, 0, 0);
     }
+
+    float thit;
+    if (tmin > 0) {
+      thit = tmin;
+    } else {
+      thit = tmax;
+    }
+    point3 p = r.at(thit);
+    if (std::abs(p.x - boxMin.x) < eps)
+      normal = vec3(-1, 0, 0);
+    else if (std::abs(p.x - boxMax.x) < eps)
+      normal = vec3(1, 0, 0);
+    else if (std::abs(p.y - boxMin.y) < eps)
+      normal = vec3(0, -1, 0);
+    else if (std::abs(p.y - boxMax.y) < eps)
+      normal = vec3(0, 1, 0);
+    else if (std::abs(p.z - boxMin.z) < eps)
+      normal = vec3(0, 0, -1);
+    else if (std::abs(p.z - boxMax.z) < eps)
+      normal = vec3(0, 0, 1);
   }
 
-  return true;
+  return normal;
 }
 
 color ray_color(const ray &r) {
 
-  if (hit_cube(point3(1, 1, -5), r))
-    return color(1, 0, 0);
+  vec3 normal = hit_cube(point3(1, 1, -5), r);
+
+  if (normal != vec3(0, 0, 0)) {
+    std::cerr << normal.x << normal.y << normal.z << std::endl;
+    return color(normal.x, normal.y, normal.z);
+  }
 
   vec3 unit_direction = glm::normalize(r.direction());
   float a = 0.5 * (unit_direction.y + 1.0);

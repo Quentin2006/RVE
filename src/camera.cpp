@@ -2,8 +2,7 @@
 #include "consts.h"
 
 Camera::Camera(uint32_t _width, uint32_t _height)
-    : width(_width), height(_height), center(0, 0, 0) {
-}
+    : width(_width), height(_height), center(0, 0, 0) {}
 
 void Camera::moveForward(float distance) { center.z -= distance; }
 

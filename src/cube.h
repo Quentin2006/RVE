@@ -7,11 +7,11 @@
 
 class Cube {
 public:
-  Cube(float x, float y, float z);
+  Cube(const point3 &point);
 
   vec3 is_hit(const ray &r) const;
   // void move(vec3 delta) { center += delta; }
 
 private:
-  Quad face;
+  std::array<Quad, 6> faces;
 };

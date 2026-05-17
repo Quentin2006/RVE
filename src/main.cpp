@@ -1,22 +1,30 @@
 #include "camera.h"
 #include "consts.h"
+#include "shapes/cube.h"
 #include "window.h"
 #include "world.h"
 
 #include <array>
 #include <glm/geometric.hpp>
 #include <glm/glm.hpp>
+#include <memory>
+#include <vector>
 
 int main() {
 
   World world;
 
-  Cube cube({0, 0, -5});
-  world.add(std::make_unique<Cube>(cube));
+  Triangle tri({0, 0, 0}, {0, 0, 0}, {0, 1, 0}, {1, 0, 0});
+  Face face({0, -1, 0}, {1, 0, 0}, {0, 1, 0});
+  Cube cube({1, 0, 0});
 
-  // world.add(std::make_unique<Cube>(0, 1, -5));
-  // world.add(std::make_unique<Cube>(0, 2, -5));
-  // world.add(std::make_unique<Cube>(1, 1, -5));
+  std::vector<std::unique_ptr<Hittable>> objs;
+  objs.push_back(std::make_unique<Triangle>(tri));
+  objs.push_back(std::make_unique<Face>(face));
+  objs.push_back(std::make_unique<Cube>(cube));
+
+  world.add(std::move(objs[0]));
+  world.add(std::move(objs[1]));
 
   Camera camera(window::WIDTH, window::HEIGHT);
 

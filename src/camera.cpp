@@ -39,9 +39,9 @@ void Camera::render(const World &world,
 color Camera::ray_color(const ray &r, const World &world) const {
 
   for (const auto &cube : world) {
-    vec3 normal = cube->is_hit(r);
+    vec3 normal;
 
-    if (normal != vec3(0, 0, 0)) {
+    if (cube->is_hit(r, normal)) {
       return color(normal.x, normal.y, normal.z);
     }
   }

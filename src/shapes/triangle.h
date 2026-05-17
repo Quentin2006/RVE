@@ -4,7 +4,7 @@
 class Triangle : public Hittable {
 public:
   Triangle();
-  Triangle(point3 p, point3 A, point3 B, point3 C);
+  Triangle(point3 A, point3 B, point3 C);
 
   bool is_hit(const ray &r, vec3 &normal) const override;
 

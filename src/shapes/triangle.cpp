@@ -1,10 +1,9 @@
 #include "triangle.h"
 
-Triangle::Triangle() : A({0, 0, 0}), B({0, 0, 0}), C({0, 0, 0}) {}
+Triangle::Triangle() : A({0, 0, 0}), B({0, 0, 0}), C({0, 0, 0}) { update(); }
 
-Triangle::Triangle(point3 p, point3 A_, point3 B_, point3 C_)
-    : A(A_), B(B_), C(C_) {
-  move(p);
+Triangle::Triangle(point3 A_, point3 B_, point3 C_) : A(A_), B(B_), C(C_) {
+  update();
 }
 
 // PERF: change to Möller-Trumbore algorithm in the future
@@ -45,10 +44,6 @@ bool Triangle::is_hit(const ray &r, vec3 &normal) const {
 }
 
 void Triangle::update(void) {
-  A = point3{0, 0, 0} + get_pos();
-  B = point3{0, 1, 0} + get_pos();
-  C = point3{1, 0, 0} + get_pos();
-
   AB = B - A;
   BC = C - B;
   CA = A - C;

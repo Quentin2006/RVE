@@ -15,7 +15,7 @@ public:
 
 protected:
   virtual void update(void) = 0;
-  virtual point3 get_pos(void) final { return pos; }
+  virtual point3 get_pos(void) const final { return pos; }
 
 private:
   point3 pos;

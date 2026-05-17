@@ -14,7 +14,7 @@ int main() {
 
   World world;
 
-  Triangle tri({0, 0, 0}, {0, 0, 0}, {0, 1, 0}, {1, 0, 0});
+  Triangle tri({0, 0, 0}, {0, 1, 0}, {1, 0, 0});
   Face face({0, -1, 0}, {1, 0, 0}, {0, 1, 0});
   Cube cube({1, 0, 0});
 
@@ -23,8 +23,9 @@ int main() {
   objs.push_back(std::make_unique<Face>(face));
   objs.push_back(std::make_unique<Cube>(cube));
 
-  world.add(std::move(objs[0]));
-  world.add(std::move(objs[1]));
+  // world.add(std::move(objs[0]));
+  // world.add(std::move(objs[1]));
+  world.add(std::move(objs[2]));
 
   Camera camera(window::WIDTH, window::HEIGHT);
 

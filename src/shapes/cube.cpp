@@ -2,13 +2,18 @@
 
 Cube::Cube(const point3 &p)
     : faces{
-          Face(p + vec3{0, 0, 1}, {1, 0, 0}, {0, 1, 0}),  // front
-          Face(p + vec3{0, 0, -1}, {1, 0, 0}, {0, 1, 0}), // back
-          Face(p + vec3{0, 1, 0}, {1, 0, 0}, {0, 0, 1}),  // top
-          Face(p + vec3{0, -1, 0}, {1, 0, 0}, {0, 0, 1}), // bottom
-          Face(p + vec3{1, 0, 0}, {0, 1, 0}, {0, 0, 1}),  // right
-          Face(p + vec3{-1, 0, 0}, {0, 1, 0}, {0, 0, 1})  // left
-      } {}
+          Face(point3(p.x, p.y, p.z + 1), {1, 0, 0}, {0, 1, 0}), // front (+Z)
+          Face(point3(p.x, p.y, p.z), {0, 1, 0}, {1, 0, 0}),     // back (-Z)
+
+          Face(point3(p.x, p.y + 1, p.z), {0, 0, 1}, {1, 0, 0}), // top (+Y)
+          Face(point3(p.x, p.y, p.z), {1, 0, 0}, {0, 0, 1}),     // bottom (-Y)
+                                                                 //
+          Face(point3(p.x + 1, p.y, p.z), {0, 0, 1}, {0, 1, 0}), // right (+X)
+          Face(point3(p.x, p.y, p.z), {0, 1, 0}, {0, 0, 1})      // left (-X)
+      } {
+  move(p);
+}
+
 bool Cube::is_hit(const ray &r, vec3 &normal) const {
 
   for (const auto &face : faces) {
@@ -22,7 +27,10 @@ bool Cube::is_hit(const ray &r, vec3 &normal) const {
 void Cube::update(void) {
   point3 p = get_pos();
 
-  for (Face &face : faces) {
-    face.move(p);
-  }
+  faces[0].move(p + point3(0, 0, 1));
+  faces[1].move(p + point3(0, 0, 0));
+  faces[2].move(p + point3(0, 1, 0));
+  faces[3].move(p + point3(0, 0, 0));
+  faces[4].move(p + point3(1, 0, 0));
+  faces[5].move(p + point3(0, 0, 0));
 }

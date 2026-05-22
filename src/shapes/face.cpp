@@ -1,6 +1,6 @@
 #include "face.h"
 
-bool Face::is_hit(const ray &r, vec3 &normal) const {
+bool Face::is_hit(const ray &r, vec3 &normal, float &t) const {
   point3 p = get_pos();
 
   point3 A = p;
@@ -11,5 +11,5 @@ bool Face::is_hit(const ray &r, vec3 &normal) const {
   Triangle t1(A, B, C);
   Triangle t2(D, C, B);
 
-  return t1.is_hit(r, normal) || t2.is_hit(r, normal);
+  return t1.is_hit(r, normal, t) || t2.is_hit(r, normal, t);
 }

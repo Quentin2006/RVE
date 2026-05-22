@@ -8,24 +8,14 @@
 #include <glm/geometric.hpp>
 #include <glm/glm.hpp>
 #include <memory>
-#include <vector>
 
 int main() {
 
   World world;
 
-  Triangle tri({0, 0, 0}, {0, 1, 0}, {1, 0, 0});
-  Face face({0, -1, 0}, {1, 0, 0}, {0, 1, 0});
-  Cube cube({1, 0, 0});
+  std::unique_ptr<Hittable> cube = std::make_unique<Cube>(Cube({0, 0, -5}));
 
-  std::vector<std::unique_ptr<Hittable>> objs;
-  objs.push_back(std::make_unique<Triangle>(tri));
-  objs.push_back(std::make_unique<Face>(face));
-  objs.push_back(std::make_unique<Cube>(cube));
-
-  // world.add(std::move(objs[0]));
-  // world.add(std::move(objs[1]));
-  world.add(std::move(objs[2]));
+  world.add(std::move(cube));
 
   Camera camera(window::WIDTH, window::HEIGHT);
 

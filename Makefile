@@ -25,4 +25,10 @@ run: $(TARGET)
 clean:
 	rm -rf $(BIN_DIR)
 
-.PHONY: all run clean
+M = "my lazy git commit comment"
+git:
+	git add $(SRCS)  **/*.h Makefile
+	git commit -m $(M)
+	git push
+
+.PHONY: all run clean git

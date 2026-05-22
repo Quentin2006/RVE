@@ -1,4 +1,7 @@
 #include "cube.h"
+#include <array>
+#include <cmath>
+#include <utility>
 
 Cube::Cube(const point3 &p)
     : faces{
@@ -14,14 +17,26 @@ Cube::Cube(const point3 &p)
   move(p);
 }
 
-bool Cube::is_hit(const ray &r, vec3 &normal) const {
+bool Cube::is_hit(const ray &r, vec3 &normal, float &t) const {
+
+  float nearest_t = INFINITY;
+  vec3 nearest_n = {0, 0, 0};
 
   for (const auto &face : faces) {
-    if (face.is_hit(r, normal)) {
-      return true;
+    float temp_t;
+    vec3 temp_n;
+
+    if (face.is_hit(r, temp_n, temp_t) && temp_t < nearest_t) {
+      nearest_t = temp_t;
+      nearest_n = temp_n;
     }
   }
-  return false;
+
+  if (nearest_t != INFINITY) {
+    normal = nearest_n;
+    t = nearest_t;
+  }
+  return nearest_t != INFINITY;
 }
 
 void Cube::update(void) {

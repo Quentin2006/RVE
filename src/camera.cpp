@@ -40,8 +40,8 @@ color Camera::ray_color(const ray &r, const World &world) const {
 
   for (const auto &cube : world) {
     vec3 normal;
-
-    if (cube->is_hit(r, normal)) {
+    float t;
+    if (cube->is_hit(r, normal, t)) {
       return color(normal.x, normal.y, normal.z);
     }
   }

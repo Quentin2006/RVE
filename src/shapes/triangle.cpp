@@ -8,12 +8,12 @@ Triangle::Triangle(point3 A_, point3 B_, point3 C_) : A(A_), B(B_), C(C_) {
 
 // PERF: change to Möller-Trumbore algorithm in the future
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution.html
-bool Triangle::is_hit(const ray &r, vec3 &normal) const {
+bool Triangle::is_hit(const ray &r, vec3 &normal, float &t) const {
 
   // distance from orgin
   float D = -dot(N, A);
 
-  float t = -(dot(N, r.origin()) + D) / glm::dot(N, r.direction());
+  t = -(dot(N, r.origin()) + D) / glm::dot(N, r.direction());
 
   // ray is behind tri
   if (t < 0) {

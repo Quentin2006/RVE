@@ -43,6 +43,7 @@ int main() {
 
   while (!window.should_close()) {
     window.processEvents();
+
     SDL_GetRelativeMouseState(&mouseDx, &mouseDy);
 
     camera.rotateYaw(static_cast<float>(mouseDx) * mouseSensitivity *

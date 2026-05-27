@@ -24,5 +24,5 @@ public:
 private:
   std::vector<std::unique_ptr<Hittable>> world;
 
-  uint id;
+  uint id = 0;
 };

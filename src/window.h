@@ -23,4 +23,7 @@ private:
   uint32_t height;
 
   bool running;
+
+  int lastMouseX;
+  int lastMouseY;
 };

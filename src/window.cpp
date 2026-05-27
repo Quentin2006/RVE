@@ -1,19 +1,36 @@
 #include "window.h"
 
 Window::Window(uint32_t _width, uint32_t _height)
-    : window(SDL_CreateWindow("RVE", SDL_WINDOWPOS_CENTERED,
-                              SDL_WINDOWPOS_CENTERED, (int)_width, (int)_height,
-                              SDL_WINDOW_SHOWN)
+    : window(nullptr), renderer(nullptr), texture(nullptr), width(_width),
+      height(_height), running(false), lastMouseX(0), lastMouseY(0) {
+  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+    SDL_Log("SDL_Init failed: %s", SDL_GetError());
+    return;
+  }
 
-                 ),
-      renderer(SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED)),
-      texture(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
-                                SDL_TEXTUREACCESS_STREAMING, (int)_width,
-                                (int)_height)),
-      width(_width), height(_height), running(true)
+  window = SDL_CreateWindow("RVE", SDL_WINDOWPOS_CENTERED,
+                            SDL_WINDOWPOS_CENTERED, (int)_width, (int)_height,
+                            SDL_WINDOW_SHOWN);
+  if (!window) {
+    SDL_Log("SDL_CreateWindow failed: %s", SDL_GetError());
+    return;
+  }
 
-{
-  SDL_Init(SDL_INIT_VIDEO);
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+  if (!renderer) {
+    SDL_Log("SDL_CreateRenderer failed: %s", SDL_GetError());
+    return;
+  }
+
+  texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+                              SDL_TEXTUREACCESS_STREAMING, (int)_width,
+                              (int)_height);
+  if (!texture) {
+    SDL_Log("SDL_CreateTexture failed: %s", SDL_GetError());
+    return;
+  }
+
+  running = true;
 }
 
 Window::~Window() {
@@ -29,11 +46,15 @@ Window::~Window() {
  * @param pixels pixels to be rendered, must be size WIDHT*HEIGHT
  */
 void Window::present(const std::array<uint32_t, window::SIZE> &pixels) {
+  if (!running || !window || !renderer || !texture)
+    return;
+
   SDL_Event event;
   while (SDL_PollEvent(&event) != 0) {
     if (event.type == SDL_QUIT) {
       running = false;
     }
+    SDL_GetMouseState(&lastMouseX, &lastMouseY);
   }
 
   SDL_UpdateTexture(texture, nullptr, pixels.data(),

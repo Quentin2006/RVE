@@ -1,6 +1,7 @@
 #include "camera.h"
 #include "consts.h"
 #include "ray.h"
+#include <cmath>
 #include <glm/gtc/quaternion.hpp>
 
 namespace {
@@ -55,9 +56,7 @@ void Camera::moveRight(float distance) {
   center += right * distance;
 }
 
-void Camera::moveUp(float distance) {
-  center += vec3(0, 1, 0) * distance;
-}
+void Camera::moveUp(float distance) { center += vec3(0, 1, 0) * distance; }
 
 void Camera::render(const World &world,
                     std::array<uint32_t, window::SIZE> &pixels) const {
@@ -90,12 +89,20 @@ void Camera::render(const World &world,
 
 color Camera::ray_color(const ray &r, const World &world) const {
 
+  color c;
+  float closest_t = INFINITY;
+
   for (const auto &cube : world) {
     vec3 normal;
     float t;
-    if (cube->hit(r, normal, t)) {
-      return 0.5f * (normal + color(1.0f, 1.0f, 1.0f));
+    if (cube->hit(r, normal, t) && t < closest_t) {
+      closest_t = t;
+      c = 0.5f * (normal + color(1.0f, 1.0f, 1.0f));
     }
+  }
+
+  if (closest_t != INFINITY) {
+    return c;
   }
 
   vec3 unit_direction = glm::normalize(r.direction());

@@ -11,7 +11,9 @@ int main() {
 
   World world;
 
+  world.add(std::make_unique<Cube>(point3{-1, 0, -5}));
   world.add(std::make_unique<Cube>(point3{0, 0, -5}));
+  world.add(std::make_unique<Cube>(point3{1, 0, -5}));
   Camera camera(window::WIDTH, window::HEIGHT);
   Window window{window::WIDTH, window::HEIGHT};
 

@@ -1,14 +1,16 @@
 #include "hittable.h"
+#include <array>
+#include <glm/mat3x3.hpp>
 #include <glm/mat4x4.hpp>
 
-class Cube : public Hittable {
+class Cube final : public Hittable {
 public:
   Cube(const point3 &point, Material mat = Material::Diffuse);
 
   void setRotation(const vec3 &rotationRadians);
   void setScale(const vec3 &scaleFactors);
 
-  bool hit(const ray &r, vec3 &normal, float &t) const override;
+  bool hit(const ray &r, vec3 &normal, float &t, float t_max) const override;
 
 private:
   void update(void) override;
@@ -17,4 +19,6 @@ private:
   vec3 scaleFactors{1.0f};
   glm::mat4 modelMatrix;
   glm::mat4 inverseModelMatrix;
+  glm::mat3 normalMatrix;
+  std::array<vec3, 6> faceNormals;
 };

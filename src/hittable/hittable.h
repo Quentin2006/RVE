@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../consts.h"
 #include "../ray.h"
 
 enum class Material {
@@ -14,7 +15,7 @@ public:
   Hittable(Material m) : mat(m), pos({0, 0, 0}) {}
   virtual ~Hittable() = default;
 
-  virtual bool hit(const ray &r, vec3 &normal, float &t) const = 0;
+  virtual bool hit(const ray &r, vec3 &normal, float &t, float t_max) const = 0;
 
   void move(const point3 &new_pos) {
     pos = new_pos;

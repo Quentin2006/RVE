@@ -13,6 +13,3 @@ constexpr float VIEWPORT_HEIGHT = 1.f;
 constexpr float VIEWPORT_WIDTH =
     VIEWPORT_HEIGHT * ((float)window::WIDTH / window::HEIGHT);
 } // namespace camera
-
-constexpr int BLOCK_SIZE = 256;
-constexpr int NUM_BLOCKS = (window::SIZE + BLOCK_SIZE - 1) / BLOCK_SIZE;

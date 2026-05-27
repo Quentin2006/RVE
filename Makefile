@@ -8,7 +8,6 @@ LIBS := -lSDL2 -lm
 
 CXXFLAGS := -std=c++20 -Wall -Wextra -Wpedantic -O2 -DNDEBUG
 
-# recursive source discovery (nested dirs supported)
 SRCS := $(shell find $(SRC_DIR) -type f -name "*.cpp")
 
 all: $(TARGET)

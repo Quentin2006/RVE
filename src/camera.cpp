@@ -67,7 +67,8 @@ void Camera::render(const World &world,
       viewport_upper_left + 0.5f * (pixel_delta_u + pixel_delta_v);
 
   for (uint32_t j = 0; j < height; j++) {
-    const auto row_start = pixel00_loc + (static_cast<float>(j) * pixel_delta_v);
+    const auto row_start =
+        pixel00_loc + (static_cast<float>(j) * pixel_delta_v);
     auto *row = pixels.data() + (j * width);
     auto pixel_center = row_start;
     for (uint32_t i = 0; i < width; i++) {
@@ -81,23 +82,11 @@ void Camera::render(const World &world,
 }
 
 color Camera::ray_color(const ray &r, const World &world) const {
+  vec3 normal;
+  float t;
 
-  color c{0.0f};
-  float closest_t = INFINITY;
-  bool hit_anything = false;
-
-  for (const auto &cube : world) {
-    vec3 normal;
-    float t;
-    if (cube->hit(r, normal, t) && t < closest_t) {
-      closest_t = t;
-      c = 0.5f * (normal + color(1.0f, 1.0f, 1.0f));
-      hit_anything = true;
-    }
-  }
-
-  if (hit_anything) {
-    return c;
+  if (world.hit(r, normal, t, INFINITY)) {
+    return 0.5f * (normal + color(1.0f, 1.0f, 1.0f));
   }
 
   vec3 unit_direction = glm::normalize(r.direction());

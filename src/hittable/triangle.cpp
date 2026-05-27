@@ -15,7 +15,7 @@ Triangle::Triangle(Material material, point3 A_, point3 B_, point3 C_)
   move({0, 0, 0});
 }
 
-bool Triangle::hit(const ray &r, vec3 &normal, float &t) const {
+bool Triangle::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
   if (!valid) {
     return false;
   }
@@ -40,7 +40,7 @@ bool Triangle::hit(const ray &r, vec3 &normal, float &t) const {
   }
 
   t = glm::dot(AC, qvec) * invDet;
-  if (t <= kEpsilon) {
+  if (t <= kEpsilon || t > t_max) {
     return false;
   }
 

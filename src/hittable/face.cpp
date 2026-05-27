@@ -31,7 +31,7 @@ void Face::update() {
   invDet = valid ? 1.0f / det : 0.0f;
 }
 
-bool Face::hit(const ray &r, vec3 &normal, float &t) const {
+bool Face::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
   if (!valid) {
     return false;
   }
@@ -42,7 +42,7 @@ bool Face::hit(const ray &r, vec3 &normal, float &t) const {
   }
 
   t = glm::dot(faceNormal, origin - r.origin()) / denom;
-  if (t <= kEpsilon) {
+  if (t <= kEpsilon || t > t_max) {
     return false;
   }
 

@@ -2,7 +2,7 @@
 
 Window::Window(uint32_t _width, uint32_t _height)
     : window(nullptr), renderer(nullptr), texture(nullptr), width(_width),
-      height(_height), running(false), lastMouseX(0), lastMouseY(0) {
+      height(_height), running(false) {
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     SDL_Log("SDL_Init failed: %s", SDL_GetError());
     return;
@@ -40,6 +40,19 @@ Window::~Window() {
   SDL_Quit();
 }
 
+void Window::processEvents() {
+  if (!running || !window || !renderer || !texture) {
+    return;
+  }
+
+  SDL_Event event;
+  while (SDL_PollEvent(&event) != 0) {
+    if (event.type == SDL_QUIT) {
+      running = false;
+    }
+  }
+}
+
 /**
  * @brief Will upload and render the passed array of pixels
  *
@@ -48,14 +61,6 @@ Window::~Window() {
 void Window::present(const std::array<uint32_t, window::SIZE> &pixels) {
   if (!running || !window || !renderer || !texture)
     return;
-
-  SDL_Event event;
-  while (SDL_PollEvent(&event) != 0) {
-    if (event.type == SDL_QUIT) {
-      running = false;
-    }
-    SDL_GetMouseState(&lastMouseX, &lastMouseY);
-  }
 
   SDL_UpdateTexture(texture, nullptr, pixels.data(),
                     (int)(width * sizeof(uint32_t)));

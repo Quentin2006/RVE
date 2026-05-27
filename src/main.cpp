@@ -5,6 +5,8 @@
 #include "world.h"
 
 #include <array>
+#include <chrono>
+#include <iostream>
 #include <memory>
 
 int main() {
@@ -26,10 +28,12 @@ int main() {
   SDL_GetRelativeMouseState(&mouseDx, &mouseDy);
 
   constexpr float mouseSensitivity = 0.0025f;
+  constexpr float moveStep = 0.1f;
 
   std::array<uint32_t, window::SIZE> pixels;
+
   while (!window.should_close()) {
-    SDL_PumpEvents();
+    window.processEvents();
     SDL_GetRelativeMouseState(&mouseDx, &mouseDy);
 
     camera.rotateYaw(static_cast<float>(mouseDx) * mouseSensitivity);
@@ -38,27 +42,35 @@ int main() {
     const Uint8 *keys = SDL_GetKeyboardState(nullptr);
 
     if (keys[SDL_SCANCODE_W] != 0U) {
-      camera.moveForward(0.1f);
+      camera.moveForward(moveStep);
     }
     if (keys[SDL_SCANCODE_S] != 0U) {
-      camera.moveForward(-0.1f);
+      camera.moveForward(-moveStep);
     }
     if (keys[SDL_SCANCODE_D] != 0U) {
-      camera.moveRight(0.1f);
+      camera.moveRight(moveStep);
     }
     if (keys[SDL_SCANCODE_A] != 0U) {
-      camera.moveRight(-0.1f);
+      camera.moveRight(-moveStep);
     }
     if (keys[SDL_SCANCODE_SPACE] != 0U) {
-      camera.moveUp(0.1f);
+      camera.moveUp(moveStep);
     }
     if (keys[SDL_SCANCODE_LSHIFT] != 0U) {
-      camera.moveUp(-0.1f);
+      camera.moveUp(-moveStep);
     }
+
+    const auto start{std::chrono::steady_clock::now()};
 
     camera.render(world, pixels);
 
     window.present(pixels);
+
+    const auto end{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{end - start};
+    const float fps = 1.f / elapsed_seconds.count();
+
+    std::cerr << "FPS: " << fps << '\n';
   }
 
   return EXIT_SUCCESS;

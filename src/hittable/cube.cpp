@@ -19,10 +19,6 @@ ray transformRay(const ray &r, const glm::mat4 &m) {
   return ray(point3(origin), vec3(direction));
 }
 
-vec3 transformNormal(const vec3 &n, const glm::mat4 &inverseModelMatrix) {
-  const glm::mat3 normalMatrix = glm::transpose(glm::mat3(inverseModelMatrix));
-  return glm::normalize(normalMatrix * n);
-}
 }
 
 Cube::Cube(const point3 &p, Material mat)
@@ -46,46 +42,45 @@ bool Cube::hit(const ray &r, vec3 &normal, float &t) const {
   const ray localRay = transformRay(r, inverseModelMatrix);
   const point3 minCorner(0.0f, 0.0f, 0.0f);
   const point3 maxCorner(1.0f, 1.0f, 1.0f);
+  const auto &origin = localRay.origin();
+  const auto &direction = localRay.direction();
 
   float tMin = -std::numeric_limits<float>::infinity();
   float tMax = std::numeric_limits<float>::infinity();
-  vec3 enterNormal(0.0f);
-  vec3 exitNormal(0.0f);
+  int enterFace = 0;
+  int exitFace = 0;
 
   for (int axis = 0; axis < 3; ++axis) {
-    const float origin = localRay.origin()[axis];
-    const float direction = localRay.direction()[axis];
+    const float axisOrigin = origin[axis];
+    const float axisDirection = direction[axis];
     const float slabMin = minCorner[axis];
     const float slabMax = maxCorner[axis];
+    int nearFace = axis * 2;
+    int farFace = axis * 2 + 1;
 
-    if (std::abs(direction) < kEpsilon) {
-      if (origin < slabMin || origin > slabMax) {
+    if (std::abs(axisDirection) < kEpsilon) {
+      if (axisOrigin < slabMin || axisOrigin > slabMax) {
         return false;
       }
       continue;
     }
 
-    const float invDirection = 1.0f / direction;
-    float t0 = (slabMin - origin) * invDirection;
-    float t1 = (slabMax - origin) * invDirection;
-
-    vec3 n0(0.0f);
-    vec3 n1(0.0f);
-    n0[axis] = -1.0f;
-    n1[axis] = 1.0f;
+    const float invDirection = 1.0f / axisDirection;
+    float t0 = (slabMin - axisOrigin) * invDirection;
+    float t1 = (slabMax - axisOrigin) * invDirection;
 
     if (t0 > t1) {
       std::swap(t0, t1);
-      std::swap(n0, n1);
+      std::swap(nearFace, farFace);
     }
 
     if (t0 > tMin) {
       tMin = t0;
-      enterNormal = n0;
+      enterFace = nearFace;
     }
     if (t1 < tMax) {
       tMax = t1;
-      exitNormal = n1;
+      exitFace = farFace;
     }
 
     if (tMin > tMax) {
@@ -99,13 +94,11 @@ bool Cube::hit(const ray &r, vec3 &normal, float &t) const {
 
   if (tMin > kEpsilon) {
     t = tMin;
-    normal = enterNormal;
+    normal = faceNormals[enterFace];
   } else {
     t = tMax;
-    normal = exitNormal;
+    normal = faceNormals[exitFace];
   }
-
-  normal = transformNormal(normal, inverseModelMatrix);
 
   return true;
 }
@@ -118,4 +111,11 @@ void Cube::update(void) {
   modelMatrix = glm::scale(modelMatrix, scaleFactors);
   modelMatrix = glm::translate(modelMatrix, vec3(-0.5f, -0.5f, -0.5f));
   inverseModelMatrix = glm::inverse(modelMatrix);
+  normalMatrix = glm::transpose(glm::mat3(inverseModelMatrix));
+  faceNormals[0] = glm::normalize(normalMatrix * vec3(-1.0f, 0.0f, 0.0f));
+  faceNormals[1] = glm::normalize(normalMatrix * vec3(1.0f, 0.0f, 0.0f));
+  faceNormals[2] = glm::normalize(normalMatrix * vec3(0.0f, -1.0f, 0.0f));
+  faceNormals[3] = glm::normalize(normalMatrix * vec3(0.0f, 1.0f, 0.0f));
+  faceNormals[4] = glm::normalize(normalMatrix * vec3(0.0f, 0.0f, -1.0f));
+  faceNormals[5] = glm::normalize(normalMatrix * vec3(0.0f, 0.0f, 1.0f));
 }

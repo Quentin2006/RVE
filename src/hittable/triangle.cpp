@@ -15,64 +15,51 @@ Triangle::Triangle(Material material, point3 A_, point3 B_, point3 C_)
   move({0, 0, 0});
 }
 
-bool Triangle::is_hit(const ray &r, vec3 &normal, float &t) const {
-  if (glm::dot(N, N) < kEpsilon * kEpsilon) {
+bool Triangle::hit(const ray &r, vec3 &normal, float &t) const {
+  if (!valid) {
     return false;
   }
 
-  const float denom = glm::dot(N, r.direction());
-  if (std::abs(denom) < kEpsilon) {
+  const vec3 pvec = glm::cross(r.direction(), AC);
+  const float det = glm::dot(AB, pvec);
+  if (std::abs(det) < kEpsilon) {
     return false;
   }
 
-  const float D = -glm::dot(N, A);
+  const float invDet = 1.0f / det;
+  const vec3 tvec = r.origin() - A;
+  const float u = glm::dot(tvec, pvec) * invDet;
+  if (u < -kEpsilon || u > 1.0f + kEpsilon) {
+    return false;
+  }
 
-  t = -(glm::dot(N, r.origin()) + D) / denom;
+  const vec3 qvec = glm::cross(tvec, AB);
+  const float v = glm::dot(r.direction(), qvec) * invDet;
+  if (v < -kEpsilon || u + v > 1.0f + kEpsilon) {
+    return false;
+  }
 
+  t = glm::dot(AC, qvec) * invDet;
   if (t <= kEpsilon) {
     return false;
   }
 
-  const vec3 P = r.origin() + t * r.direction();
-
-  vec3 Ne;
-  const vec3 Ap = P - A;
-  Ne = glm::cross(AB, Ap);
-  if (glm::dot(N, Ne) < -kEpsilon) {
-    return false;
-  }
-
-  const vec3 Bp = P - B;
-  Ne = glm::cross(BC, Bp);
-  if (glm::dot(N, Ne) < -kEpsilon) {
-    return false;
-  }
-
-  const vec3 Cp = P - C;
-  Ne = glm::cross(CA, Cp);
-  if (glm::dot(N, Ne) < -kEpsilon) {
-    return false;
-  }
-
-  normal = N;
+  normal = triangleNormal;
   return true;
-}
-
-bool Triangle::hit(const ray &r, vec3 &normal, float &t) const {
-  return is_hit(r, normal, t);
 }
 
 void Triangle::update(void) {
   AB = B - A;
-  BC = C - B;
-  CA = A - C;
+  AC = C - A;
 
-  const vec3 rawNormal = glm::cross(AB, C - A);
+  const vec3 rawNormal = glm::cross(AB, AC);
   const float normalLen2 = glm::dot(rawNormal, rawNormal);
   if (normalLen2 < kEpsilon * kEpsilon) {
-    N = vec3(0.0f);
+    triangleNormal = vec3(0.0f);
+    valid = false;
     return;
   }
 
-  N = rawNormal / std::sqrt(normalLen2);
+  triangleNormal = rawNormal / std::sqrt(normalLen2);
+  valid = true;
 }

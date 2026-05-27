@@ -6,7 +6,17 @@ TARGET := $(BIN_DIR)/rve
 INCLUDES := -I/usr/include/SDL2 -I/usr/include/glm
 LIBS := -lSDL2 -lm
 
-CXXFLAGS := -std=c++20 -Wall -Wextra -Wpedantic -O2 -DNDEBUG
+CXXFLAGS_COMMON := -std=c++20 -Wall -Wextra -Wpedantic -pipe
+CXXFLAGS_RELEASE := -O3 -flto -DNDEBUG
+CXXFLAGS_DEBUG := -Og -g
+
+BUILD ?= release
+
+ifeq ($(BUILD),debug)
+  CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_DEBUG)
+else
+  CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_RELEASE)
+endif
 
 SRCS := $(shell find $(SRC_DIR) -type f -name "*.cpp")
 

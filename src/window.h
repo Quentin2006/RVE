@@ -10,6 +10,7 @@ public:
   Window(uint32_t width, uint32_t height);
   ~Window();
 
+  void processEvents();
   void present(const std::array<uint32_t, window::SIZE> &pixels);
 
   bool should_close() const { return !running; }
@@ -23,7 +24,4 @@ private:
   uint32_t height;
 
   bool running;
-
-  int lastMouseX;
-  int lastMouseY;
 };

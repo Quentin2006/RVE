@@ -1,15 +1,14 @@
 #include "cube.h"
-#include <cmath>
 #include <algorithm>
-#include <limits>
+#include <cmath>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <limits>
 
 namespace {
-constexpr float kEpsilon = 1e-6f;
 
 float sanitizeScaleComponent(float value) {
-  const float magnitude = std::max(std::abs(value), kEpsilon);
+  const float magnitude = std::max(std::abs(value), math::K_EPSILON);
   return std::copysign(magnitude, value == 0.0f ? 1.0f : value);
 }
 
@@ -19,7 +18,7 @@ ray transformRay(const ray &r, const glm::mat4 &m) {
   return ray(point3(origin), vec3(direction));
 }
 
-}
+} // namespace
 
 Cube::Cube(const point3 &p, Material mat)
     : Hittable(mat), modelMatrix(1.0f), inverseModelMatrix(1.0f) {
@@ -58,7 +57,7 @@ bool Cube::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
     int nearFace = axis * 2;
     int farFace = axis * 2 + 1;
 
-    if (std::abs(axisDirection) < kEpsilon) {
+    if (std::abs(axisDirection) < math::K_EPSILON) {
       if (axisOrigin < slabMin || axisOrigin > slabMax) {
         return false;
       }
@@ -88,11 +87,11 @@ bool Cube::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
     }
   }
 
-  if (tMax <= kEpsilon || tMin > t_max) {
+  if (tMax <= math::K_EPSILON || tMin > t_max) {
     return false;
   }
 
-  if (tMin > kEpsilon) {
+  if (tMin > math::K_EPSILON) {
     t = tMin;
     normal = faceNormals[enterFace];
   } else {

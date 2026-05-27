@@ -1,10 +1,6 @@
 #include "triangle.h"
 #include <cmath>
 
-namespace {
-constexpr float kEpsilon = 1e-6f;
-}
-
 Triangle::Triangle(Material material)
     : Hittable(material), A({0, 0, 0}), B({0, 0, 0}), C({0, 0, 0}) {
   move({0, 0, 0});
@@ -22,25 +18,25 @@ bool Triangle::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
 
   const vec3 pvec = glm::cross(r.direction(), AC);
   const float det = glm::dot(AB, pvec);
-  if (std::abs(det) < kEpsilon) {
+  if (std::abs(det) < math::K_EPSILON) {
     return false;
   }
 
   const float invDet = 1.0f / det;
   const vec3 tvec = r.origin() - A;
   const float u = glm::dot(tvec, pvec) * invDet;
-  if (u < -kEpsilon || u > 1.0f + kEpsilon) {
+  if (u < -math::K_EPSILON || u > 1.0f + math::K_EPSILON) {
     return false;
   }
 
   const vec3 qvec = glm::cross(tvec, AB);
   const float v = glm::dot(r.direction(), qvec) * invDet;
-  if (v < -kEpsilon || u + v > 1.0f + kEpsilon) {
+  if (v < -math::K_EPSILON || u + v > 1.0f + math::K_EPSILON) {
     return false;
   }
 
   t = glm::dot(AC, qvec) * invDet;
-  if (t <= kEpsilon || t > t_max) {
+  if (t <= math::K_EPSILON || t > t_max) {
     return false;
   }
 
@@ -54,7 +50,7 @@ void Triangle::update(void) {
 
   const vec3 rawNormal = glm::cross(AB, AC);
   const float normalLen2 = glm::dot(rawNormal, rawNormal);
-  if (normalLen2 < kEpsilon * kEpsilon) {
+  if (normalLen2 < math::K_EPSILON * math::K_EPSILON) {
     triangleNormal = vec3(0.0f);
     valid = false;
     return;

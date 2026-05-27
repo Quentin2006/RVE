@@ -1,5 +1,4 @@
 #include "camera.h"
-#include "consts.h"
 #include "hittable/cube.h"
 #include "window.h"
 #include "world.h"
@@ -33,9 +32,6 @@ int main() {
   int mouseDy = 0;
   SDL_GetRelativeMouseState(&mouseDx, &mouseDy);
 
-  constexpr float mouseSensitivity = 0.25f;
-  constexpr float moveStep = 1.f;
-
   std::array<uint32_t, window::SIZE> pixels;
 
   float delta_time = 0;
@@ -46,30 +42,30 @@ int main() {
 
     SDL_GetRelativeMouseState(&mouseDx, &mouseDy);
 
-    camera.rotateYaw(static_cast<float>(mouseDx) * mouseSensitivity *
+    camera.rotateYaw(static_cast<float>(mouseDx) * input::LOOK_SPEED *
                      delta_time);
-    camera.rotatePitch(static_cast<float>(mouseDy) * mouseSensitivity *
+    camera.rotatePitch(static_cast<float>(mouseDy) * input::LOOK_SPEED *
                        delta_time);
 
     const Uint8 *keys = SDL_GetKeyboardState(nullptr);
 
     if (keys[SDL_SCANCODE_W] != 0U) {
-      camera.moveForward(moveStep * delta_time);
+      camera.moveForward(input::MOVE_SPEED * delta_time);
     }
     if (keys[SDL_SCANCODE_S] != 0U) {
-      camera.moveForward(-moveStep * delta_time);
+      camera.moveForward(-input::MOVE_SPEED * delta_time);
     }
     if (keys[SDL_SCANCODE_D] != 0U) {
-      camera.moveRight(moveStep * delta_time);
+      camera.moveRight(input::MOVE_SPEED * delta_time);
     }
     if (keys[SDL_SCANCODE_A] != 0U) {
-      camera.moveRight(-moveStep * delta_time);
+      camera.moveRight(-input::MOVE_SPEED * delta_time);
     }
     if (keys[SDL_SCANCODE_SPACE] != 0U) {
-      camera.moveUp(moveStep * delta_time);
+      camera.moveUp(input::MOVE_SPEED * delta_time);
     }
     if (keys[SDL_SCANCODE_LSHIFT] != 0U) {
-      camera.moveUp(-moveStep * delta_time);
+      camera.moveUp(-input::MOVE_SPEED * delta_time);
     }
 
     const auto start{std::chrono::steady_clock::now()};

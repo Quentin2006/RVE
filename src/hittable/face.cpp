@@ -2,16 +2,12 @@
 
 #include <cmath>
 
-namespace {
-constexpr float kEpsilon = 1e-6f;
-}
-
 void Face::update() {
   origin = get_pos();
 
   const vec3 rawNormal = glm::cross(u, v);
   const float normalLen2 = glm::dot(rawNormal, rawNormal);
-  if (normalLen2 < kEpsilon * kEpsilon) {
+  if (normalLen2 < math::K_EPSILON * math::K_EPSILON) {
     faceNormal = vec3(0.0f);
     uu = 0.0f;
     uv = 0.0f;
@@ -27,7 +23,7 @@ void Face::update() {
   vv = glm::dot(v, v);
 
   const float det = uu * vv - uv * uv;
-  valid = std::abs(det) >= kEpsilon;
+  valid = std::abs(det) >= math::K_EPSILON;
   invDet = valid ? 1.0f / det : 0.0f;
 }
 
@@ -37,12 +33,12 @@ bool Face::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
   }
 
   const float denom = glm::dot(faceNormal, r.direction());
-  if (std::abs(denom) < kEpsilon) {
+  if (std::abs(denom) < math::K_EPSILON) {
     return false;
   }
 
   t = glm::dot(faceNormal, origin - r.origin()) / denom;
-  if (t <= kEpsilon || t > t_max) {
+  if (t <= math::K_EPSILON || t > t_max) {
     return false;
   }
 
@@ -52,8 +48,8 @@ bool Face::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
   const float wv = glm::dot(w, v);
   const float s = (wu * vv - wv * uv) * invDet;
   const float vcoord = (wv * uu - wu * uv) * invDet;
-  if (s < -kEpsilon || s > 1.0f + kEpsilon || vcoord < -kEpsilon ||
-      vcoord > 1.0f + kEpsilon) {
+  if (s < -math::K_EPSILON || s > 1.0f + math::K_EPSILON ||
+      vcoord < -math::K_EPSILON || vcoord > 1.0f + math::K_EPSILON) {
     return false;
   }
 

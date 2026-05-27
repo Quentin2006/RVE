@@ -1,5 +1,4 @@
 #include "camera.h"
-#include "consts.h"
 #include "ray.h"
 #include <cmath>
 #include <glm/gtc/quaternion.hpp>

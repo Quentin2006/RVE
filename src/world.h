@@ -6,9 +6,12 @@
 
 class World {
 public:
-  void add(std::unique_ptr<Hittable> to_add) {
+  int add(std::unique_ptr<Hittable> to_add) {
     world.push_back(std::move(to_add));
+    return id++;
   }
+
+  void remove(uint id) { world[id] = nullptr; }
 
   bool hit(const ray &r, vec3 &normal, float &t, float t_max) const;
 
@@ -20,4 +23,6 @@ public:
 
 private:
   std::vector<std::unique_ptr<Hittable>> world;
+
+  uint id;
 };

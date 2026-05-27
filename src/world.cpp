@@ -8,6 +8,10 @@ bool World::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
   float closest_hit_t = t_max;
 
   for (const auto &object : world) {
+    if (object == nullptr) {
+      continue;
+    }
+
     vec3 candidate_normal;
     float candidate_t;
     if (object->hit(r, candidate_normal, candidate_t, closest_t) &&

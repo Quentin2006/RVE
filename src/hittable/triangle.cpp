@@ -1,18 +1,17 @@
 #include "triangle.h"
 #include <cmath>
 
-Triangle::Triangle(Material material, ::color object_color)
-    : Hittable(material, object_color), A({0, 0, 0}), B({0, 0, 0}), C({0, 0, 0}) {
+Triangle::Triangle(Material material)
+    : Hittable(material), A({0, 0, 0}), B({0, 0, 0}), C({0, 0, 0}) {
   move({0, 0, 0});
 }
 
-Triangle::Triangle(Material material, point3 A_, point3 B_, point3 C_,
-                   ::color object_color)
-    : Hittable(material, object_color), A(A_), B(B_), C(C_) {
+Triangle::Triangle(Material material, point3 A_, point3 B_, point3 C_)
+    : Hittable(material), A(A_), B(B_), C(C_) {
   move({0, 0, 0});
 }
 
-bool Triangle::hit(const ray &r, HitRecord &rec, float t_max) const {
+bool Triangle::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
   if (!valid) {
     return false;
   }
@@ -36,13 +35,12 @@ bool Triangle::hit(const ray &r, HitRecord &rec, float t_max) const {
     return false;
   }
 
-  rec.t = glm::dot(AC, qvec) * invDet;
-  if (rec.t <= math::K_EPSILON || rec.t > t_max) {
+  t = glm::dot(AC, qvec) * invDet;
+  if (t <= math::K_EPSILON || t > t_max) {
     return false;
   }
 
-  rec.normal = triangleNormal;
-  rec.color = get_color();
+  normal = triangleNormal;
   return true;
 }
 

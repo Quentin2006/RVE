@@ -1,7 +1,6 @@
-
 #include "world.h"
 
-bool World::hit(const ray &r, HitRecord &rec, float t_max) const {
+bool World::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
   bool hit_anything = false;
   float closest_t = t_max;
 
@@ -10,11 +9,14 @@ bool World::hit(const ray &r, HitRecord &rec, float t_max) const {
       continue;
     }
 
-    HitRecord candidate{};
-    if (object->hit(r, candidate, closest_t) && candidate.t < closest_t) {
+    vec3 candidate_normal;
+    float candidate_t;
+    if (object->hit(r, candidate_normal, candidate_t, closest_t) &&
+        candidate_t < closest_t) {
       hit_anything = true;
-      closest_t = candidate.t;
-      rec = candidate;
+      closest_t = candidate_t;
+      normal = candidate_normal;
+      t = candidate_t;
     }
   }
 

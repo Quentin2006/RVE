@@ -20,8 +20,8 @@ ray transformRay(const ray &r, const glm::mat4 &m) {
 
 } // namespace
 
-Cube::Cube(const point3 &p, Material mat, ::color object_color)
-    : Hittable(mat, object_color), modelMatrix(1.0f), inverseModelMatrix(1.0f) {
+Cube::Cube(const point3 &p, Material mat)
+    : Hittable(mat), modelMatrix(1.0f), inverseModelMatrix(1.0f) {
   move(p);
 }
 
@@ -37,7 +37,7 @@ void Cube::setScale(const vec3 &newScaleFactors) {
   update();
 }
 
-bool Cube::hit(const ray &r, HitRecord &rec, float t_max) const {
+bool Cube::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
   const ray localRay = transformRay(r, inverseModelMatrix);
   const point3 minCorner(0.0f, 0.0f, 0.0f);
   const point3 maxCorner(1.0f, 1.0f, 1.0f);
@@ -92,14 +92,13 @@ bool Cube::hit(const ray &r, HitRecord &rec, float t_max) const {
   }
 
   if (tMin > math::K_EPSILON) {
-    rec.t = tMin;
-    rec.normal = faceNormals[enterFace];
+    t = tMin;
+    normal = faceNormals[enterFace];
   } else {
-    rec.t = tMax;
-    rec.normal = faceNormals[exitFace];
+    t = tMax;
+    normal = faceNormals[exitFace];
   }
 
-  rec.color = get_color();
   return true;
 }
 

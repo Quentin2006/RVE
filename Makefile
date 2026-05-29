@@ -34,6 +34,9 @@ run: $(TARGET)
 clean:
 	rm -rf $(BIN_DIR)
 
+benchmark:
+	python3 benchmark.py
+
 M = "my lazy git commit comment"
 git:
 	git add $(SRCS)  **/*.h Makefile

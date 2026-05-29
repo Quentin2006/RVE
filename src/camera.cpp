@@ -81,11 +81,10 @@ void Camera::render(const World &world,
 }
 
 color Camera::ray_color(const ray &r, const World &world) const {
-  vec3 normal;
-  float t;
+  HitRecord hit{};
 
-  if (world.hit(r, normal, t, INFINITY)) {
-    return 0.5f * (normal + color(1.0f, 1.0f, 1.0f));
+  if (world.hit(r, hit, INFINITY)) {
+    return 0.5f * (hit.normal + color(1.0f, 1.0f, 1.0f));
   }
 
   vec3 unit_direction = glm::normalize(r.direction());

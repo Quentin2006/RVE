@@ -13,7 +13,7 @@ public:
 
   void remove(uint id) { world[id] = nullptr; }
 
-  bool hit(const ray &r, vec3 &normal, float &t, float t_max) const;
+  bool hit(const ray &r, HitRecord &rec, float t_max) const;
 
   auto begin() const { return world.begin(); }
   auto end() const { return world.end(); }

@@ -4,7 +4,7 @@ void App::run() {
 
   std::vector<uint> ids;
 
-  for (int x = 0; x < 1; ++x) {
+  for (int x = 0; x < 4; ++x) {
     for (int y = 0; y < 4; ++y) {
       int id = world.add(std::make_unique<Cube>(point3{x, y, -5}));
       ids.push_back(id);

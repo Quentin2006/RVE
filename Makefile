@@ -43,4 +43,4 @@ git:
 	git commit -m $(M)
 	git push
 
-.PHONY: all run clean git
+.PHONY: all run clean git benchmark

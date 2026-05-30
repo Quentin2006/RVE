@@ -37,7 +37,7 @@ void Cube::setScale(const vec3 &newScaleFactors) {
   update();
 }
 
-bool Cube::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
+bool Cube::hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const {
   const ray localRay = transformRay(r, inverseModelMatrix);
   const point3 minCorner(0.0f, 0.0f, 0.0f);
   const point3 maxCorner(1.0f, 1.0f, 1.0f);
@@ -82,22 +82,19 @@ bool Cube::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
       exitFace = farFace;
     }
 
-    if (tMin > tMax || tMin > t_max) {
+    if (tMin > tMax || tMin > ray_max) {
       return false;
     }
   }
 
-  if (tMax <= math::K_EPSILON || tMin > t_max) {
+ if (tMax <= ray_min || tMin > ray_max) {
     return false;
   }
 
-  if (tMin > math::K_EPSILON) {
-    t = tMin;
-    normal = faceNormals[enterFace];
-  } else {
-    t = tMax;
-    normal = faceNormals[exitFace];
-  }
+  float hitT = tMin >= ray_min ? tMin : tMax;
+  rec.t = hitT;
+  rec.normal = faceNormals[tMin >= ray_min ? enterFace : exitFace];
+  rec.point = r.origin() + hitT * r.direction();
 
   return true;
 }

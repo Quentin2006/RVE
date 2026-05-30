@@ -11,8 +11,10 @@ Triangle::Triangle(Material material, point3 A_, point3 B_, point3 C_)
   move({0, 0, 0});
 }
 
-bool Triangle::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
+bool Triangle::hit(const ray &r, float ray_min, float ray_max,
+                   HitRecord &rec) const {
   if (!valid) {
+
     return false;
   }
 
@@ -35,12 +37,15 @@ bool Triangle::hit(const ray &r, vec3 &normal, float &t, float t_max) const {
     return false;
   }
 
-  t = glm::dot(AC, qvec) * invDet;
-  if (t <= math::K_EPSILON || t > t_max) {
+  const float t = glm::dot(AC, qvec) * invDet;
+  if (t < ray_min || t >= ray_max) {
     return false;
   }
 
-  normal = triangleNormal;
+  rec.t = t;
+  rec.normal = triangleNormal;
+  rec.point = r.origin() + t * r.direction();
+
   return true;
 }
 

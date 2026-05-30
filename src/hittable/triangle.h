@@ -6,7 +6,7 @@ public:
   Triangle(Material material);
   Triangle(Material material, point3 A, point3 B, point3 C);
 
-  bool hit(const ray &r, vec3 &normal, float &t, float t_max) const override;
+  bool hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const override;
 
 private:
   void update(void) override;

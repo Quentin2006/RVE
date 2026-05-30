@@ -10,7 +10,7 @@ public:
   void setRotation(const vec3 &rotationRadians);
   void setScale(const vec3 &scaleFactors);
 
-  bool hit(const ray &r, vec3 &normal, float &t, float t_max) const override;
+  bool hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const override;
 
 private:
   void update(void) override;

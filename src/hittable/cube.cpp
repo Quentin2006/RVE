@@ -37,7 +37,8 @@ void Cube::setScale(const vec3 &newScaleFactors) {
   update();
 }
 
-bool Cube::hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const {
+bool Cube::hit(const ray &r, float ray_min, float ray_max,
+               HitRecord &rec) const {
   const ray localRay = transformRay(r, inverseModelMatrix);
   const point3 minCorner(0.0f, 0.0f, 0.0f);
   const point3 maxCorner(1.0f, 1.0f, 1.0f);
@@ -87,7 +88,7 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const
     }
   }
 
- if (tMax <= ray_min || tMin > ray_max) {
+  if (tMax <= ray_min || tMin > ray_max) {
     return false;
   }
 
@@ -95,6 +96,7 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const
   rec.t = hitT;
   rec.normal = faceNormals[tMin >= ray_min ? enterFace : exitFace];
   rec.point = r.origin() + hitT * r.direction();
+  rec.mat = std::make_shared<Material>(get_material());
 
   return true;
 }

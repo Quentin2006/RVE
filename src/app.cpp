@@ -1,12 +1,15 @@
 #include "app.h"
+#include <memory>
 
 void App::run() {
 
   std::vector<uint> ids;
+  std::unique_ptr<Material> mat =
+      std::make_unique<Lambertian>(color{0.5f, 0.5f, 0.5f});
 
   for (int x = 0; x < 1; ++x) {
     for (int y = 0; y < 1; ++y) {
-      int id = world.add(std::make_unique<Cube>(point3{x, y, -5}));
+      int id = world.add(std::make_unique<Cube>(point3{x, y, -5}, mat));
       ids.push_back(id);
     }
   }

@@ -81,7 +81,7 @@ void Camera::render(const World &world,
 
         ray r(center, sample_point - center);
 
-        pixel_color += ray_color(r, world);
+        pixel_color += ray_color(r, world, camera::MAX_DEPTH);
       }
       pixel_color /= static_cast<float>(camera::SAMPLES_PER_PIXEL);
       *row++ = convert(pixel_color);
@@ -91,7 +91,7 @@ void Camera::render(const World &world,
   }
 }
 
-color Camera::ray_color(const ray &r, const World &world) const {
+color Camera::ray_color(const ray &r, const World &world, int depth) const {
   HitRecord rec;
   if (world.hit(r, 0.f, INFINITY, rec)) {
     return 0.5f * (rec.normal + color(1.0f, 1.0f, 1.0f));

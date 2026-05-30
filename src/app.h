@@ -1,6 +1,7 @@
 #include "camera.h"
 #include "consts.h"
 #include "hittable/cube.h"
+#include "hittable/material.h"
 #include "window.h"
 #include "world.h"
 #include <array>

@@ -22,7 +22,7 @@ public:
               std::array<uint32_t, window::SIZE> &pixels) const;
 
 private:
-  color ray_color(const ray &r, const World &world) const;
+  color ray_color(const ray &r, const World &world, int depth) const;
   uint32_t width;
   uint32_t height;
   point3 center;

@@ -71,10 +71,21 @@ void Camera::render(const World &world,
     auto *row = pixels.data() + (j * width);
     auto pixel_center = row_start;
     for (uint32_t i = 0; i < width; i++) {
-      const auto ray_direction = pixel_center - center;
-      ray r(center, ray_direction);
+      color pixel_color(0, 0, 0);
+      for (int s = 0; s < camera::SAMPLES_PER_PIXEL; s++) {
+        const float x_offset = (static_cast<float>(rand()) / RAND_MAX - 0.5f);
+        const float y_offset = (static_cast<float>(rand()) / RAND_MAX - 0.5f);
 
-      *row++ = convert(ray_color(r, world));
+        auto sample_point =
+            pixel_center + x_offset * pixel_delta_u + y_offset * pixel_delta_v;
+
+        ray r(center, sample_point - center);
+
+        pixel_color += ray_color(r, world);
+      }
+      pixel_color /= static_cast<float>(camera::SAMPLES_PER_PIXEL);
+      *row++ = convert(pixel_color);
+
       pixel_center += pixel_delta_u;
     }
   }

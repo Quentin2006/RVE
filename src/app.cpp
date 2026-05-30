@@ -4,7 +4,7 @@ void App::run() {
 
   std::vector<uint> ids;
 
-  for (int x = 0; x < 4; ++x) {
+  for (int x = 0; x < 1; ++x) {
     for (int y = 0; y < 1; ++y) {
       int id = world.add(std::make_unique<Cube>(point3{x, y, -5}));
       ids.push_back(id);
@@ -70,11 +70,5 @@ void App::run() {
     const float fps = 1.f / elapsed_seconds.count();
 
     std::cerr << "FPS: " << fps << '\n';
-
-    if ((int)elapsed_time % 10 == 5) {
-      world.remove(0);
-      world.remove(1);
-      world.remove(2);
-    }
   }
 }

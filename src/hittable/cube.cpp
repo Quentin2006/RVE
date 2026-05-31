@@ -20,11 +20,6 @@ ray transformRay(const ray &r, const glm::mat4 &m) {
 
 } // namespace
 
-Cube::Cube(const point3 &p, Material mat)
-    : Hittable(mat), modelMatrix(1.0f), inverseModelMatrix(1.0f) {
-  move(p);
-}
-
 void Cube::setRotation(const vec3 &newRotationRadians) {
   rotationRadians = newRotationRadians;
   update();
@@ -96,7 +91,7 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max,
   rec.t = hitT;
   rec.normal = faceNormals[tMin >= ray_min ? enterFace : exitFace];
   rec.point = r.origin() + hitT * r.direction();
-  rec.mat = std::make_shared<Material>(get_material());
+  rec.mat = get_material();
 
   return true;
 }

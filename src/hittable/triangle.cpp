@@ -1,16 +1,6 @@
 #include "triangle.h"
 #include <cmath>
 
-Triangle::Triangle(Material material)
-    : Hittable(material), A({0, 0, 0}), B({0, 0, 0}), C({0, 0, 0}) {
-  move({0, 0, 0});
-}
-
-Triangle::Triangle(Material material, point3 A_, point3 B_, point3 C_)
-    : Hittable(material), A(A_), B(B_), C(C_) {
-  move({0, 0, 0});
-}
-
 bool Triangle::hit(const ray &r, float ray_min, float ray_max,
                    HitRecord &rec) const {
   if (!valid) {

@@ -5,12 +5,16 @@
 
 class Cube final : public Hittable {
 public:
-  Cube(const point3 &point, Material mat = Material::Diffuse);
+  Cube(const point3 &point, MaterialType mat, color albedo)
+      : Hittable(mat, albedo), modelMatrix(1.0f), inverseModelMatrix(1.0f) {
+    move(point);
+  }
 
   void setRotation(const vec3 &rotationRadians);
   void setScale(const vec3 &scaleFactors);
 
-  bool hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const override;
+  bool hit(const ray &r, float ray_min, float ray_max,
+           HitRecord &rec) const override;
 
 private:
   void update(void) override;

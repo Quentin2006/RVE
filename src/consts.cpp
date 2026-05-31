@@ -10,7 +10,7 @@ constexpr float FOCAL_LENGTH = 1.f;
 constexpr float VIEWPORT_HEIGHT = 1.f;
 constexpr float VIEWPORT_WIDTH =
     VIEWPORT_HEIGHT * ((float)window::WIDTH / window::HEIGHT);
-constexpr int SAMPLES_PER_PIXEL = 5;
+constexpr int SAMPLES_PER_PIXEL = 1;
 constexpr int MAX_DEPTH = 5;
 } // namespace camera
 

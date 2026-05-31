@@ -92,9 +92,17 @@ void Camera::render(const World &world,
 }
 
 color Camera::ray_color(const ray &r, const World &world, int depth) const {
+  if (depth <= 0)
+    return color(0, 0, 0);
+
   HitRecord rec;
   if (world.hit(r, 0.f, INFINITY, rec)) {
-    return 0.5f * (rec.normal + color(1.0f, 1.0f, 1.0f));
+    ray scattered;
+    color attenuation;
+    if (rec.hit_object->scatter(r, rec, attenuation, scattered)) {
+      return attenuation * ray_color(scattered, world, depth - 1);
+    }
+    return color(0, 0, 0);
   }
 
   vec3 unit_direction = glm::normalize(r.direction());

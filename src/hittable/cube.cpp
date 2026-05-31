@@ -92,6 +92,7 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max,
   rec.normal = faceNormals[tMin >= ray_min ? enterFace : exitFace];
   rec.point = r.origin() + hitT * r.direction();
   rec.mat = get_material();
+  rec.hit_object = this;
 
   return true;
 }

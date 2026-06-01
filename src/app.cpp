@@ -25,7 +25,8 @@ void App::run() {
   std::array<uint32_t, window::SIZE> pixels;
 
   float delta_time = 0;
-  float elapsed_time = 0;
+  float fps_elapsed_time = 0;
+  uint32_t fps_frame_count = 0;
 
   while (!window.should_close()) {
     window.processEvents();
@@ -68,10 +69,15 @@ void App::run() {
     const std::chrono::duration<double> elapsed_seconds{end - start};
     delta_time = elapsed_seconds.count();
 
-    elapsed_time += delta_time;
+    fps_elapsed_time += delta_time;
+    ++fps_frame_count;
 
-    const float fps = 1.f / elapsed_seconds.count();
-
-    std::cerr << "FPS: " << fps << '\n';
+    if (fps_elapsed_time >= 1.f) {
+      const float avg_fps =
+          static_cast<float>(fps_frame_count) / fps_elapsed_time;
+      std::cerr << "FPS: " << avg_fps << '\n';
+      fps_elapsed_time = 0.f;
+      fps_frame_count = 0;
+    }
   }
 }

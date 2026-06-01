@@ -96,7 +96,7 @@ color Camera::ray_color(const ray &r, const World &world, int depth) const {
     return color(0, 0, 0);
 
   HitRecord rec;
-  if (world.hit(r, 0.f, INFINITY, rec)) {
+  if (world.hit(r, math::K_EPSILON, INFINITY, rec)) {
     ray scattered;
     color attenuation;
 

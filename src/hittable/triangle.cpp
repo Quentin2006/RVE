@@ -35,6 +35,8 @@ bool Triangle::hit(const ray &r, float ray_min, float ray_max,
   rec.t = t;
   rec.normal = triangleNormal;
   rec.point = r.origin() + t * r.direction();
+  rec.mat = get_material();
+  rec.hit_object = this;
 
   return true;
 }

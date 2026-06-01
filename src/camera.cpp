@@ -99,12 +99,15 @@ color Camera::ray_color(const ray &r, const World &world, int depth) const {
   if (world.hit(r, 0.f, INFINITY, rec)) {
     ray scattered;
     color attenuation;
+
     if (rec.hit_object->scatter(r, rec, attenuation, scattered)) {
       return attenuation * ray_color(scattered, world, depth - 1);
     }
+
     return color(0, 0, 0);
   }
 
+  // sky box
   vec3 unit_direction = glm::normalize(r.direction());
   float a = 0.5f * (unit_direction.y + 1.0f);
   return (1.0f - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);

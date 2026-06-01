@@ -56,6 +56,8 @@ bool Face::hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const
   rec.t = t;
   rec.normal = faceNormal;
   rec.point = r.origin() + t * r.direction();
+  rec.mat = get_material();
+  rec.hit_object = this;
 
   return true;
 }

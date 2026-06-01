@@ -6,13 +6,11 @@ void App::run() {
 
   std::vector<uint> ids;
 
-  for (int x = 0; x < 1; ++x) {
-    for (int y = 0; y < 1; ++y) {
-      int id = world.add(std::make_unique<Cube>(
-          point3{x, y, -5}, MaterialType::LAMBERTIAN, color{1, 1, 1}));
-      ids.push_back(id);
-    }
-  }
+  int lam = world.add(std::make_unique<Cube>(
+      point3{0, 0, -5}, MaterialType::LAMBERTIAN, color{1, 1, 1}));
+  int metal = world.add(std::make_unique<Cube>(
+      point3{2, 0, -5}, MaterialType::METAL, color{1, 1, 1}));
+  ids.push_back(lam);
 
   if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0) {
     SDL_Log("SDL_SetRelativeMouseMode failed: %s", SDL_GetError());

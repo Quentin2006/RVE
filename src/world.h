@@ -1,12 +1,12 @@
 #pragma once
 
-#include "hittable/hittable.h"
+#include "cube.h"
 #include <memory>
 #include <vector>
 
 class World {
 public:
-  int add(std::unique_ptr<Hittable> to_add) {
+  int add(std::unique_ptr<Cube> to_add) {
     world.push_back(std::move(to_add));
     return id++;
   }
@@ -22,7 +22,7 @@ public:
   auto end() { return world.end(); }
 
 private:
-  std::vector<std::unique_ptr<Hittable>> world;
+  std::vector<std::unique_ptr<Cube>> world;
 
   uint id = 0;
 };

@@ -1,16 +1,9 @@
 #include "cube.h"
-#include <algorithm>
-#include <cmath>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <limits>
 
 namespace {
-
-float sanitizeScaleComponent(float value) {
-  const float magnitude = std::max(std::abs(value), math::K_EPSILON);
-  return std::copysign(magnitude, value == 0.0f ? 1.0f : value);
-}
 
 ray transformRay(const ray &r, const glm::mat4 &m) {
   const glm::vec4 origin = m * glm::vec4(r.origin(), 1.0f);
@@ -19,18 +12,6 @@ ray transformRay(const ray &r, const glm::mat4 &m) {
 }
 
 } // namespace
-
-void Cube::setRotation(const vec3 &newRotationRadians) {
-  rotationRadians = newRotationRadians;
-  update();
-}
-
-void Cube::setScale(const vec3 &newScaleFactors) {
-  scaleFactors = vec3(sanitizeScaleComponent(newScaleFactors.x),
-                      sanitizeScaleComponent(newScaleFactors.y),
-                      sanitizeScaleComponent(newScaleFactors.z));
-  update();
-}
 
 bool Cube::hit(const ray &r, float ray_min, float ray_max,
                HitRecord &rec) const {
@@ -98,14 +79,14 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max,
   rec.t = hitT;
   rec.normal = faceNormals[tMin >= ray_min ? enterFace : exitFace];
   rec.point = r.origin() + hitT * r.direction();
-  rec.mat = get_material();
+  rec.mat = mat;
   rec.hit_object = this;
 
   return true;
 }
 
-void Cube::update(void) {
-  modelMatrix = glm::translate(glm::mat4(1.0f), get_pos() + vec3(0.5f));
+void Cube::update() {
+  modelMatrix = glm::translate(glm::mat4(1.0f), pos + vec3(0.5f));
   modelMatrix = glm::rotate(modelMatrix, rotationRadians.x, vec3(1, 0, 0));
   modelMatrix = glm::rotate(modelMatrix, rotationRadians.y, vec3(0, 1, 0));
   modelMatrix = glm::rotate(modelMatrix, rotationRadians.z, vec3(0, 0, 1));

@@ -39,8 +39,8 @@ benchmark:
 
 M = "my lazy git commit comment"
 git:
-	git add $(SRCS)  **/*.h Makefile
-	git commit -m $(M)
+	git add .
+	git commit -m "$(M)"
 	git push
 
 .PHONY: all run clean git benchmark

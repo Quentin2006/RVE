@@ -1,12 +1,11 @@
 #include "app.h"
-#include "hittable/hittable.h"
 #include <memory>
 
 void App::run() {
 
-  int lam = world.add(std::make_unique<Cube>(
+  world.add(std::make_unique<Cube>(
       point3{-1, 0, -4}, MaterialType::LAMBERTIAN, color{1, .5, .5}));
-  int metal = world.add(std::make_unique<Cube>(
+  world.add(std::make_unique<Cube>(
       point3{1, 0, -4}, MaterialType::METAL, color{.5, .5, 100}));
 
   if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0) {

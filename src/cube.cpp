@@ -150,13 +150,9 @@ bool Cube::scatter(const ray &r_in, const HitRecord &rec, color &attenuation,
 
     return true;
   }
-  case EMMISSIVE:
-    return false; // TODO: Implement
-  case NONE:
+  default:
     return false;
   };
-
-  return false;
 }
 
 bool Cube::scatter_lambertian(const HitRecord &rec, color &attenuation,

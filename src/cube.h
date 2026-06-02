@@ -25,9 +25,10 @@ struct HitRecord {
 class Cube {
 public:
   Cube(const vec3 &point, const MaterialType &m, const color &c,
-       float fuzz = 0.0f, float refraction_index = 1.5f)
-      : mat(m), albedo(c), fuzz(fuzz), refraction_index(refraction_index),
-        pos(point) {
+       float fuzz = 0.0f, float refraction_index = 1.5f,
+       float brightness = 1.0f)
+      : mat(m), albedo(c), fuzz(fuzz), brightness(brightness),
+        refraction_index(refraction_index), pos(point) {
     update();
   }
 
@@ -52,6 +53,15 @@ public:
 
   bool scatter(const ray &r_in, const HitRecord &rec, color &attenuation,
                ray &scattered) const;
+
+  bool emitted(color &c) const {
+    if (mat == MaterialType::EMMISSIVE) {
+      c = albedo * brightness;
+      return true;
+    }
+    c = vec3{0, 0, 0};
+    return false;
+  }
 
   void setRefractionIndex(float newRefractionIndex) {
     refraction_index = newRefractionIndex;

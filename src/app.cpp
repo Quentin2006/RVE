@@ -6,11 +6,13 @@
 void App::run() {
 
   int lam = world.add(
-      Cube(vec3{-1, 0, -4}, MaterialType::LAMBERTIAN, color{1, .5, .5}));
-  int glass = world.add(
-      Cube(vec3{1, 0, -4}, MaterialType::DIELECTRIC, color{.5, .5, 1}));
-  int metal =
-      world.add(Cube(vec3{0, 1, -4}, MaterialType::METAL, color{.5, 1, .5}));
+      Cube(vec3{-1, 0, -4}, MaterialType::LAMBERTIAN, color{1, 1, 1}));
+  // int glass = world.add(
+  //     Cube(vec3{1, 0, -4}, MaterialType::DIELECTRIC, color{.5, .5, 1}));
+  // int metal =
+  //     world.add(Cube(vec3{0, 1, -4}, MaterialType::METAL, color{.5, 1, .5}));
+  int light = world.add(Cube(vec3{0, -1, -4}, MaterialType::EMMISSIVE,
+                             color{1, 0, 0}, 0.f, 0.f, 100));
 
   if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0) {
     SDL_Log("SDL_SetRelativeMouseMode failed: %s", SDL_GetError());
@@ -67,7 +69,6 @@ void App::run() {
     const std::chrono::duration<double> elapsed_seconds{end - start};
     delta_time = elapsed_seconds.count();
 
-    net_elapsed_time += delta_time;
     fps_elapsed_time += delta_time;
     ++fps_frame_count;
 

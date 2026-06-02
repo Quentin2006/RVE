@@ -98,18 +98,24 @@ color Camera::ray_color(const ray &r, const World &world, int depth) const {
     return color(0, 0, 0);
 
   HitRecord rec;
-  if (world.hit(r, math::K_EPSILON, INFINITY, rec)) {
-    ray scattered;
-    color attenuation;
 
-    if (rec.hit_object->scatter(r, rec, attenuation, scattered)) {
-      return attenuation * ray_color(scattered, world, depth - 1);
-    }
-
-    return color(0, 0, 0);
+  // If the ray hits nothing, return the background color.
+  if (!world.hit(r, math::K_EPSILON, INFINITY, rec)) {
+    vec3 unit_direction = glm::normalize(r.direction());
+    float a = 0.5f * (unit_direction.y + 1.0f);
+    return (1.0f - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
   }
 
-  vec3 unit_direction = glm::normalize(r.direction());
-  float a = 0.5f * (unit_direction.y + 1.0f);
-  return (1.0f - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
+  ray scattered;
+  color attenuation;
+  color color_from_emission;
+  rec.hit_object->emitted(color_from_emission);
+
+  if (!rec.hit_object->scatter(r, rec, attenuation, scattered))
+    return color_from_emission;
+
+  color color_from_scatter =
+      attenuation * ray_color(scattered, world, depth - 1);
+
+  return color_from_emission + color_from_scatter;
 }

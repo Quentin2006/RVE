@@ -1,12 +1,11 @@
 #include "app.h"
-#include <memory>
+#include <chrono>
+#include <iostream>
 
 void App::run() {
 
-  world.add(std::make_unique<Cube>(
-      point3{-1, 0, -4}, MaterialType::LAMBERTIAN, color{1, .5, .5}));
-  world.add(std::make_unique<Cube>(
-      point3{1, 0, -4}, MaterialType::METAL, color{.5, .5, 100}));
+  world.add(Cube(vec3{-1, 0, -4}, MaterialType::LAMBERTIAN, color{1, .5, .5}));
+  world.add(Cube(vec3{1, 0, -4}, MaterialType::METAL, color{.5, .5, 100}));
 
   if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0) {
     SDL_Log("SDL_SetRelativeMouseMode failed: %s", SDL_GetError());

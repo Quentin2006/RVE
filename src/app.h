@@ -1,16 +1,14 @@
+#pragma once
+
 #include "camera.h"
-#include "consts.h"
 #include "window.h"
 #include "world.h"
 #include <array>
 #include <chrono>
 #include <iostream>
-#include <vector>
 
 class App {
 public:
-  App() {}
-
   void run();
 
 private:

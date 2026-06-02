@@ -1,17 +1,20 @@
 #pragma once
 
 #include "cube.h"
-#include <memory>
 #include <vector>
 
 class World {
 public:
-  int add(std::unique_ptr<Cube> to_add) {
+  int add(Cube &&to_add) {
     world.push_back(std::move(to_add));
     return id++;
   }
 
-  void remove(uint id) { world[id] = nullptr; }
+  void remove(uint id) {
+    if (id < world.size()) {
+      world[id] = Cube(vec3(0, 0, 0), MaterialType::NONE, color(0, 0, 0));
+    }
+  }
 
   bool hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const;
 
@@ -22,7 +25,7 @@ public:
   auto end() { return world.end(); }
 
 private:
-  std::vector<std::unique_ptr<Cube>> world;
+  std::vector<Cube> world;
 
   uint id = 0;
 };

@@ -27,7 +27,7 @@ struct HitRecord {
 
 class Cube {
 public:
-  Cube(const point3 &point, const MaterialType &m, const color &c, float fuzz = 0.0)
+  Cube(const vec3 &point, const MaterialType &m, const color &c, float fuzz = 0.0)
       : mat(m), albedo(c), fuzz(fuzz), pos(point), modelMatrix(1.0f),
         inverseModelMatrix(1.0f) {
     update();
@@ -36,7 +36,7 @@ public:
   bool hit(const ray &r, float ray_min, float ray_max,
            HitRecord &rec) const;
 
-  void move(const point3 &new_pos) { pos = new_pos; update(); }
+  void move(const vec3 &new_pos) { pos = new_pos; update(); }
 
   void setRotation(const vec3 &newRotation) {
     rotationRadians = newRotation;
@@ -102,7 +102,7 @@ private:
   MaterialType mat;
   color albedo;
   float fuzz;
-  point3 pos;
+  vec3 pos;
   vec3 rotationRadians{0.0f};
   vec3 scaleFactors{1.0f};
   glm::mat4 modelMatrix;

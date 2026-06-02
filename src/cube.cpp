@@ -8,7 +8,7 @@ namespace {
 ray transformRay(const ray &r, const glm::mat4 &m) {
   const glm::vec4 origin = m * glm::vec4(r.origin(), 1.0f);
   const glm::vec4 direction = m * glm::vec4(r.direction(), 0.0f);
-  return ray(point3(origin), vec3(direction));
+  return ray(vec3(origin), vec3(direction));
 }
 
 } // namespace
@@ -16,8 +16,8 @@ ray transformRay(const ray &r, const glm::mat4 &m) {
 bool Cube::hit(const ray &r, float ray_min, float ray_max,
                HitRecord &rec) const {
   const ray localRay = transformRay(r, inverseModelMatrix);
-  const point3 minCorner(0.0f, 0.0f, 0.0f);
-  const point3 maxCorner(1.0f, 1.0f, 1.0f);
+  const vec3 minCorner(0.0f, 0.0f, 0.0f);
+  const vec3 maxCorner(1.0f, 1.0f, 1.0f);
   const auto &origin = localRay.origin();
   const auto &direction = localRay.direction();
   const bool originInside = origin.x > minCorner.x && origin.x < maxCorner.x &&

@@ -6,6 +6,7 @@
 #include "world.h"
 #include <array>
 #include <cstdint>
+#include <random>
 
 class Camera {
 public:
@@ -25,7 +26,8 @@ private:
   color ray_color(const ray &r, const World &world, int depth) const;
   uint32_t width;
   uint32_t height;
-  point3 center;
+  vec3 center;
   float yaw;
   float pitch;
+  mutable std::mt19937 rng;
 };

@@ -1,6 +1,4 @@
 #include "app.h"
-
-#include <cstdlib>
 #include <ctime>
 
 int main() {
@@ -8,6 +6,4 @@ int main() {
 
   App app;
   app.run();
-
-  return EXIT_SUCCESS;
 }

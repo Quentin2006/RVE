@@ -2,6 +2,7 @@
 #include "ray.h"
 #include <cmath>
 #include <glm/gtc/quaternion.hpp>
+#include <random>
 
 namespace {
 glm::quat yawOrientation(float yaw) {
@@ -9,19 +10,18 @@ glm::quat yawOrientation(float yaw) {
 }
 
 glm::quat cameraOrientation(float yaw, float pitch) {
-  // Yaw around world up (Y). Pitch must rotate around the camera's local
-  // right axis AFTER applying yaw, not the fixed world X axis. Compute the
-  // yaw-only quaternion, rotate the world right vector by it to get the
-  // camera right axis, then build the pitch quaternion around that axis.
   const glm::quat yawQuat = yawOrientation(yaw);
-  const glm::vec3 rightAxis = yawQuat * glm::vec3(1, 0, 0);
+  const vec3 rightAxis = yawQuat * glm::vec3(1, 0, 0);
   const glm::quat pitchQuat = glm::angleAxis(-pitch, rightAxis);
   return pitchQuat * yawQuat;
 }
 } // namespace
 
 Camera::Camera(uint32_t _width, uint32_t _height)
-    : width(_width), height(_height), center(0, 0, 0), yaw(0.0f), pitch(0.0f) {}
+    : width(_width), height(_height), center(0, 0, 0), yaw(0.0f), pitch(0.0f) {
+  std::random_device rd;
+  rng = std::mt19937{rd()};
+}
 
 void Camera::rotateYaw(float delta) { yaw += delta; }
 
@@ -73,8 +73,8 @@ void Camera::render(const World &world,
     for (uint32_t i = 0; i < width; i++) {
       color pixel_color(0, 0, 0);
       for (int s = 0; s < camera::SAMPLES_PER_PIXEL; s++) {
-        const float x_offset = (static_cast<float>(rand()) / RAND_MAX - 0.5f);
-        const float y_offset = (static_cast<float>(rand()) / RAND_MAX - 0.5f);
+        const float x_offset = std::uniform_real_distribution<float>(-0.5f, 0.5f)(rng);
+        const float y_offset = std::uniform_real_distribution<float>(-0.5f, 0.5f)(rng);
 
         auto sample_point =
             pixel_center + x_offset * pixel_delta_u + y_offset * pixel_delta_v;
@@ -107,7 +107,6 @@ color Camera::ray_color(const ray &r, const World &world, int depth) const {
     return color(0, 0, 0);
   }
 
-  // sky box
   vec3 unit_direction = glm::normalize(r.direction());
   float a = 0.5f * (unit_direction.y + 1.0f);
   return (1.0f - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);

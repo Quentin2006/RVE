@@ -9,14 +9,15 @@ public:
   World() {};
   World(const std::ifstream &ifs) { loadFromFile(ifs); }
 
-  int add(Cube &&to_add) {
-    world.push_back(std::move(to_add));
+  int add(Cube &to_add) {
+    world.push_back(to_add);
     return id++;
   }
 
   void remove(uint id) {
     if (id < world.size()) {
-      world[id] = Cube(VoxelData{MaterialType::NONE, color(0,0,0), 0, 1.5f, 1.0f, vec3{0,0,0}});
+      world[id] = Cube(VoxelData{MaterialType::NONE, color(0, 0, 0), 0, 1.5f,
+                                 1.0f, vec3{0, 0, 0}});
     }
   }
 

@@ -25,7 +25,7 @@ struct HitRecord {
 class Cube {
 public:
   Cube(const vec3 &point, const MaterialType &m, const color &c,
-       float fuzz = 0.0, float refraction_index = 1.0f)
+       float fuzz = 0.0f, float refraction_index = 1.5f)
       : mat(m), albedo(c), fuzz(fuzz), refraction_index(refraction_index),
         pos(point) {
     update();

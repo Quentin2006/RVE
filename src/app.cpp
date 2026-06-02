@@ -8,7 +8,7 @@ void App::run() {
   int lam = world.add(
       Cube(vec3{-1, 0, -4}, MaterialType::LAMBERTIAN, color{1, .5, .5}));
   int glass = world.add(
-      Cube(vec3{1, 0, -4}, MaterialType::DIELECTRIC, color{.5, .5, 1}, 0, 1.5));
+      Cube(vec3{1, 0, -4}, MaterialType::DIELECTRIC, color{.5, .5, 1}));
   int metal =
       world.add(Cube(vec3{0, 1, -4}, MaterialType::METAL, color{.5, 1, .5}));
 
@@ -71,12 +71,6 @@ void App::run() {
     net_elapsed_time += delta_time;
     fps_elapsed_time += delta_time;
     ++fps_frame_count;
-
-    {
-      float val = (sin(net_elapsed_time / 10) + 1) * 10;
-      std::cerr << "Updating refraction index to: " << val << '\n';
-      // world.updateRefractionIndex(glass, val);
-    }
 
     if (fps_elapsed_time >= 1.f) {
       const float avg_fps =

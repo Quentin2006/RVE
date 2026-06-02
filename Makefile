@@ -1,4 +1,5 @@
 CXX := g++
+
 SRC_DIR := src
 BIN_DIR := bin
 TARGET := $(BIN_DIR)/rve
@@ -13,16 +14,17 @@ CXXFLAGS_DEBUG := -Og -g
 BUILD ?= release
 
 ifeq ($(BUILD),debug)
-  CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_DEBUG)
+	CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_DEBUG)
 else
-  CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_RELEASE)
+	CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_RELEASE)
 endif
 
-SRCS := $(shell find $(SRC_DIR) -type f -name "*.cpp")
+SRCS := $(shell find $(SRC_DIR) -type f -name '*.cpp')
+HDRS := $(shell find $(SRC_DIR) -type f \( -name '*.h' -o -name '*.hpp' \))
 
 all: $(TARGET)
 
-$(TARGET): $(SRCS) | $(BIN_DIR)
+$(TARGET): $(SRCS) $(HDRS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) -o $@ $(LIBS)
 
 $(BIN_DIR):
@@ -37,10 +39,11 @@ clean:
 benchmark:
 	python3 benchmark.py
 
-M = "my lazy git commit comment"
+M ?= update
+
 git:
-	git add $(SRCS)  **/*.h Makefile
-	git commit -m $(M)
+	git add $(SRCS) $(HDRS) Makefile
+	git commit -m "$(M)"
 	git push
 
-.PHONY: all run clean git benchmark
+.PHONY: all run clean benchmark git

@@ -39,6 +39,9 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max,
   const point3 maxCorner(1.0f, 1.0f, 1.0f);
   const auto &origin = localRay.origin();
   const auto &direction = localRay.direction();
+  const bool originInside = origin.x > minCorner.x && origin.x < maxCorner.x &&
+                            origin.y > minCorner.y && origin.y < maxCorner.y &&
+                            origin.z > minCorner.z && origin.z < maxCorner.z;
 
   float tMin = -std::numeric_limits<float>::infinity();
   float tMax = std::numeric_limits<float>::infinity();
@@ -84,6 +87,10 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max,
   }
 
   if (tMax <= ray_min || tMin > ray_max) {
+    return false;
+  }
+
+  if (tMin < ray_min && !originInside) {
     return false;
   }
 

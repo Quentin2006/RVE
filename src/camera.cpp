@@ -73,8 +73,10 @@ void Camera::render(const World &world,
     for (uint32_t i = 0; i < width; i++) {
       color pixel_color(0, 0, 0);
       for (int s = 0; s < camera::SAMPLES_PER_PIXEL; s++) {
-        const float x_offset = std::uniform_real_distribution<float>(-0.5f, 0.5f)(rng);
-        const float y_offset = std::uniform_real_distribution<float>(-0.5f, 0.5f)(rng);
+        const float x_offset =
+            std::uniform_real_distribution<float>(-0.5f, 0.5f)(rng);
+        const float y_offset =
+            std::uniform_real_distribution<float>(-0.5f, 0.5f)(rng);
 
         auto sample_point =
             pixel_center + x_offset * pixel_delta_u + y_offset * pixel_delta_v;

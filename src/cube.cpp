@@ -146,7 +146,7 @@ bool Cube::scatter(const ray &r_in, const HitRecord &rec, color &attenuation,
     else
       direction = refract(unit_direction, rec.normal, ri);
 
-    scattered = ray(rec.point + rec.normal * math::K_EPSILON, direction);
+    scattered = ray(rec.point, direction);
 
     return true;
   }

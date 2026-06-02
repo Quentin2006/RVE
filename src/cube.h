@@ -5,6 +5,7 @@
 #include "ray.h"
 
 #include <array>
+#include <cstdlib>
 #include <glm/geometric.hpp>
 #include <glm/gtc/random.hpp>
 #include <glm/mat3x3.hpp>
@@ -14,6 +15,7 @@ inline vec3 random_unit_vector() {
   glm::vec3 random_direction = glm::sphericalRand(1.0f);
   return glm::normalize(random_direction);
 }
+inline float random_float() { return glm::linearRand(0.0f, 1.0f); }
 
 enum MaterialType { LAMBERTIAN, METAL, DIELECTRIC, EMMISSIVE, NONE };
 
@@ -67,7 +69,7 @@ public:
       return (dot(scattered.direction(), rec.normal) > 0);
     }
     case DIELECTRIC: {
-      attenuation = color(1.0, 1.0, 1.0);
+      attenuation = albedo;
       float ri = rec.front_face ? (1.0 / refraction_index) : refraction_index;
 
       vec3 unit_direction = glm::normalize(r_in.direction());
@@ -77,7 +79,7 @@ public:
       bool cannot_refract = ri * sin_theta > 1.0;
       vec3 direction;
 
-      if (cannot_refract)
+      if (cannot_refract || reflectance(cos_theta, ri) > random_float())
         direction = reflect(unit_direction, rec.normal);
       else
         direction = refract(unit_direction, rec.normal, ri);
@@ -91,6 +93,8 @@ public:
     case NONE:
       return false;
     };
+
+    return false;
   }
 
 private:
@@ -117,6 +121,12 @@ private:
     return true;
   }
 
+  float reflectance(double cosine, double refraction_index) const {
+    // Use Schlick's approximation for reflectance.
+    auto r0 = (1 - refraction_index) / (1 + refraction_index);
+    r0 = r0 * r0;
+    return r0 + (1 - r0) * std::pow((1 - cosine), 5);
+  }
   void update();
 
   MaterialType mat;

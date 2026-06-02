@@ -42,7 +42,7 @@ benchmark:
 M ?= update
 
 git:
-	git add .
+	git add $(SRCS) $(HDRS) Makefile
 	git commit -m "$(M)"
 	git push
 

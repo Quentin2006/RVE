@@ -1,13 +1,16 @@
 #include "app.h"
 #include <chrono>
+#include <glm/gtc/random.hpp>
 #include <iostream>
 
 void App::run() {
 
-  world.add(Cube(vec3{-1, 0, -4}, MaterialType::LAMBERTIAN, color{1, .5, .5}));
-  world.add(
+  int lam = world.add(
+      Cube(vec3{-1, 0, -4}, MaterialType::LAMBERTIAN, color{1, .5, .5}));
+  int glass = world.add(
       Cube(vec3{1, 0, -4}, MaterialType::DIELECTRIC, color{.5, .5, 1}, 0, 1.5));
-  world.add(Cube(vec3{0, 1, -4}, MaterialType::METAL, color{.5, 1, .5}));
+  int metal =
+      world.add(Cube(vec3{0, 1, -4}, MaterialType::METAL, color{.5, 1, .5}));
 
   if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0) {
     SDL_Log("SDL_SetRelativeMouseMode failed: %s", SDL_GetError());
@@ -20,6 +23,7 @@ void App::run() {
   std::array<uint32_t, window::SIZE> pixels;
 
   float delta_time = 0;
+  float net_elapsed_time = 0;
   float fps_elapsed_time = 0;
   uint32_t fps_frame_count = 0;
 
@@ -64,8 +68,15 @@ void App::run() {
     const std::chrono::duration<double> elapsed_seconds{end - start};
     delta_time = elapsed_seconds.count();
 
+    net_elapsed_time += delta_time;
     fps_elapsed_time += delta_time;
     ++fps_frame_count;
+
+    {
+      float val = (sin(net_elapsed_time / 10) + 1) * 10;
+      std::cerr << "Updating refraction index to: " << val << '\n';
+      // world.updateRefractionIndex(glass, val);
+    }
 
     if (fps_elapsed_time >= 1.f) {
       const float avg_fps =

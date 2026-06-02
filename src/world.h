@@ -16,6 +16,12 @@ public:
     }
   }
 
+  void updateRefractionIndex(uint id, float newRefractionIndex) {
+    if (id < world.size()) {
+      world[id].setRefractionIndex(newRefractionIndex);
+    }
+  }
+
   bool hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const;
 
   auto begin() const { return world.begin(); }

@@ -2,6 +2,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <limits>
+#include <random>
 
 namespace {
 
@@ -11,6 +12,20 @@ ray transformRay(const ray &r, const glm::mat4 &m) {
   return ray(vec3(origin), vec3(direction));
 }
 
+inline vec3 random_unit_vector() {
+  glm::vec3 random_direction = glm::sphericalRand(1.0f);
+  return glm::normalize(random_direction);
+}
+inline float random_float() {
+  static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+  static std::mt19937 generator;
+  return distribution(generator);
+}
+
+inline bool close_to_zero(glm::vec3 v) {
+  return (std::abs(v.x) < math::K_EPSILON) &&
+         (std::abs(v.y) < math::K_EPSILON) && (std::abs(v.z) < math::K_EPSILON);
+}
 } // namespace
 
 bool Cube::hit(const ray &r, float ray_min, float ray_max,
@@ -101,4 +116,58 @@ void Cube::update() {
   faceNormals[3] = glm::normalize(normalMatrix * vec3(0.0f, 1.0f, 0.0f));
   faceNormals[4] = glm::normalize(normalMatrix * vec3(0.0f, 0.0f, -1.0f));
   faceNormals[5] = glm::normalize(normalMatrix * vec3(0.0f, 0.0f, 1.0f));
+}
+
+bool Cube::scatter(const ray &r_in, const HitRecord &rec, color &attenuation,
+                   ray &scattered) const {
+  switch (mat) {
+  case LAMBERTIAN:
+    return scatter_lambertian(rec, attenuation, scattered);
+  case METAL: {
+    vec3 reflected = reflect(r_in.direction(), rec.normal);
+    reflected = glm::normalize(reflected) + (fuzz * random_unit_vector());
+    scattered = ray(rec.point, reflected);
+    attenuation = albedo;
+    return (dot(scattered.direction(), rec.normal) > 0);
+  }
+  case DIELECTRIC: {
+    attenuation = albedo;
+    float ri = rec.front_face ? (1.0 / refraction_index) : refraction_index;
+
+    vec3 unit_direction = glm::normalize(r_in.direction());
+    float cos_theta = std::fmin(dot(-unit_direction, rec.normal), 1.0);
+    float sin_theta = std::sqrt(1.0 - cos_theta * cos_theta);
+
+    bool cannot_refract = ri * sin_theta > 1.0;
+    vec3 direction;
+
+    if (cannot_refract || reflectance(cos_theta, ri) > random_float())
+      direction = reflect(unit_direction, rec.normal);
+    else
+      direction = refract(unit_direction, rec.normal, ri);
+
+    scattered = ray(rec.point + rec.normal * math::K_EPSILON, direction);
+
+    return true;
+  }
+  case EMMISSIVE:
+    return false; // TODO: Implement
+  case NONE:
+    return false;
+  };
+
+  return false;
+}
+
+bool Cube::scatter_lambertian(const HitRecord &rec, color &attenuation,
+                              ray &scattered) const {
+  auto scatter_direction = rec.normal + random_unit_vector();
+
+  if (close_to_zero(scatter_direction)) {
+    scatter_direction = rec.normal;
+  }
+
+  scattered = ray(rec.point, scatter_direction);
+  attenuation = albedo;
+  return true;
 }

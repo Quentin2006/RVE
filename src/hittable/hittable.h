@@ -4,6 +4,7 @@
 #include "../consts.h"
 #include "../ray.h"
 
+#include <glm/geometric.hpp>
 #include <glm/gtc/random.hpp>
 inline vec3 random_unit_vector() {
   glm::vec3 random_direction = glm::sphericalRand(1.0f);
@@ -45,10 +46,10 @@ public:
       return scatter_lambertian(rec, attenuation, scattered);
     case METAL: {
       vec3 reflected = reflect(r_in.direction(), rec.normal);
+      reflected = glm::normalize(reflected) + (fuzz * random_unit_vector());
       scattered = ray(rec.point, reflected);
       attenuation = albedo;
-
-      return true;
+      return (dot(scattered.direction(), rec.normal) > 0);
     }
     case DIELECTRIC:
       return false; // TODO: Implement

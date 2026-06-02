@@ -5,8 +5,9 @@
 
 class Cube final : public Hittable {
 public:
-  Cube(const point3 &point, MaterialType mat, color albedo)
-      : Hittable(mat, albedo), modelMatrix(1.0f), inverseModelMatrix(1.0f) {
+  Cube(const point3 &point, MaterialType mat, color albedo, float fuzz = 0.0f)
+      : Hittable(mat, albedo, fuzz), modelMatrix(1.0f),
+        inverseModelMatrix(1.0f) {
     move(point);
   }
 

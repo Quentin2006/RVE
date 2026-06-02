@@ -9,7 +9,7 @@ public:
   World() {};
   World(const std::ifstream &ifs) { loadFromFile(ifs); }
 
-  int add(Cube &to_add) {
+  int add(Cube &&to_add) {
     world.push_back(to_add);
     return id++;
   }

@@ -1,10 +1,14 @@
 #pragma once
 
 #include "cube.h"
+#include <fstream>
 #include <vector>
 
 class World {
 public:
+  World() {};
+  World(const std::ifstream &ifs) { loadFromFile(ifs); }
+
   int add(Cube &&to_add) {
     world.push_back(std::move(to_add));
     return id++;
@@ -12,7 +16,7 @@ public:
 
   void remove(uint id) {
     if (id < world.size()) {
-      world[id] = Cube(vec3(0, 0, 0), MaterialType::NONE, color(0, 0, 0));
+      world[id] = Cube(VoxelData{MaterialType::NONE, color(0,0,0), 0, 1.5f, 1.0f, vec3{0,0,0}});
     }
   }
 
@@ -31,6 +35,8 @@ public:
   auto end() { return world.end(); }
 
 private:
+  bool loadFromFile(const std::ifstream &ifs);
+
   std::vector<Cube> world;
 
   uint id = 0;

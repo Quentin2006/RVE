@@ -9,10 +9,12 @@
 
 class App {
 public:
+  App() : world() {};
+  App(const std::ifstream &ifp) : world(ifp) {};
   void run();
 
 private:
   Camera camera{window::WIDTH, window::HEIGHT};
-  World world{};
+  World world;
   Window window{window::WIDTH, window::HEIGHT};
 };

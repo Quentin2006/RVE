@@ -14,7 +14,7 @@ inline constexpr float VIEWPORT_HEIGHT = 1.f;
 inline constexpr float VIEWPORT_WIDTH =
     VIEWPORT_HEIGHT * ((float)window::WIDTH / window::HEIGHT);
 inline constexpr int SAMPLES_PER_PIXEL = 1;
-inline constexpr int MAX_DEPTH = 7;
+inline constexpr int MAX_DEPTH = 3;
 } // namespace camera
 
 namespace input {

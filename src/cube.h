@@ -11,7 +11,7 @@
 #include <glm/mat3x3.hpp>
 #include <glm/mat4x4.hpp>
 
-enum MaterialType { LAMBERTIAN, METAL, DIELECTRIC, EMMISSIVE, NONE };
+enum MaterialType { LAMBERTIAN, METAL, DIELECTRIC, EMISSIVE, NONE };
 
 struct HitRecord {
   float t = INFINITY;
@@ -22,20 +22,25 @@ struct HitRecord {
   bool front_face;
 };
 
+struct VoxelData {
+  MaterialType mat;
+  color albedo;
+
+  float fuzz{0.f};
+  float refraction_index{1.5f};
+  float brightness{1.f};
+
+  vec3 pos;
+};
+
 class Cube {
 public:
-  Cube(const vec3 &point, const MaterialType &m, const color &c,
-       float fuzz = 0.0f, float refraction_index = 1.5f,
-       float brightness = 1.0f)
-      : mat(m), albedo(c), fuzz(fuzz), brightness(brightness),
-        refraction_index(refraction_index), pos(point) {
-    update();
-  }
+  Cube(const VoxelData &voxel) : data(voxel) { update(); }
 
   bool hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const;
 
   void move(const vec3 &new_pos) {
-    pos = new_pos;
+    data.pos = new_pos;
     update();
   }
 
@@ -55,8 +60,8 @@ public:
                ray &scattered) const;
 
   bool emitted(color &c) const {
-    if (mat == MaterialType::EMMISSIVE) {
-      c = albedo * brightness;
+    if (data.mat == MaterialType::EMISSIVE) {
+      c = data.albedo * data.brightness;
       return true;
     }
     c = vec3{0, 0, 0};
@@ -64,8 +69,11 @@ public:
   }
 
   void setRefractionIndex(float newRefractionIndex) {
-    refraction_index = newRefractionIndex;
+    data.refraction_index = newRefractionIndex;
   }
+
+  const VoxelData &getVoxelData() const { return data; }
+  VoxelData &getVoxelData() { return data; }
 
 private:
   float sanitizeScaleComponent(float value) {
@@ -84,14 +92,8 @@ private:
   }
   void update();
 
-  MaterialType mat;
-  color albedo;
+  VoxelData data;
 
-  float fuzz;
-  float refraction_index;
-  float brightness;
-
-  vec3 pos;
   vec3 rotationRadians{0.0f};
   vec3 scaleFactors{1.0f};
   glm::mat4 modelMatrix{1.0f};

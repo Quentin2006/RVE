@@ -4,15 +4,24 @@
 #include <iostream>
 
 void App::run() {
+  int matte = world.add(Cube(VoxelData{.mat = MaterialType::LAMBERTIAN,
+                                       .albedo = color{1, 1, 1},
+                                       .pos = vec3{-1, 0, -4}}));
 
-  int lam = world.add(
-      Cube(vec3{-1, 0, -4}, MaterialType::LAMBERTIAN, color{1, 1, 1}));
-  // int glass = world.add(
-  //     Cube(vec3{1, 0, -4}, MaterialType::DIELECTRIC, color{.5, .5, 1}));
-  // int metal =
-  //     world.add(Cube(vec3{0, 1, -4}, MaterialType::METAL, color{.5, 1, .5}));
-  int light = world.add(Cube(vec3{0, -1, -4}, MaterialType::EMMISSIVE,
-                             color{1, 0, 0}, 0.f, 0.f, 100));
+  int metal = world.add(Cube(VoxelData{.mat = MaterialType::METAL,
+                                       .albedo = color{.5f, 1.f, .5f},
+                                       .fuzz = 0.f,
+                                       .pos = vec3{0, 1, -4}}));
+
+  int glass = world.add(Cube(VoxelData{.mat = MaterialType::DIELECTRIC,
+                                       .albedo = color{.5f, .5f, 1.f},
+                                       .refraction_index = 1.5f,
+                                       .pos = vec3{1, 0, -4}}));
+
+  int light = world.add(Cube(VoxelData{.mat = MaterialType::EMISSIVE,
+                                       .albedo = color{1, 0, 0},
+                                       .brightness = 100.f,
+                                       .pos = vec3{0, -1, -4}}));
 
   if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0) {
     SDL_Log("SDL_SetRelativeMouseMode failed: %s", SDL_GetError());

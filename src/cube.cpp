@@ -93,7 +93,7 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max,
   float hitT = tMin >= ray_min ? tMin : tMax;
   rec.t = hitT;
   rec.point = r.origin() + hitT * r.direction();
-  rec.mat = mat;
+  rec.mat = data.mat;
   rec.hit_object = this;
   rec.normal = faceNormals[originInside ? exitFace : enterFace];
   rec.front_face = dot(r.direction(), rec.normal) < 0;
@@ -102,7 +102,7 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max,
 }
 
 void Cube::update() {
-  modelMatrix = glm::translate(glm::mat4(1.0f), pos + vec3(0.5f));
+  modelMatrix = glm::translate(glm::mat4(1.0f), data.pos + vec3(0.5f));
   modelMatrix = glm::rotate(modelMatrix, rotationRadians.x, vec3(1, 0, 0));
   modelMatrix = glm::rotate(modelMatrix, rotationRadians.y, vec3(0, 1, 0));
   modelMatrix = glm::rotate(modelMatrix, rotationRadians.z, vec3(0, 0, 1));
@@ -120,19 +120,20 @@ void Cube::update() {
 
 bool Cube::scatter(const ray &r_in, const HitRecord &rec, color &attenuation,
                    ray &scattered) const {
-  switch (mat) {
+  switch (data.mat) {
   case LAMBERTIAN:
     return scatter_lambertian(rec, attenuation, scattered);
   case METAL: {
     vec3 reflected = reflect(r_in.direction(), rec.normal);
-    reflected = glm::normalize(reflected) + (fuzz * random_unit_vector());
+    reflected = glm::normalize(reflected) + (data.fuzz * random_unit_vector());
     scattered = ray(rec.point, reflected);
-    attenuation = albedo;
+    attenuation = data.albedo;
     return (dot(scattered.direction(), rec.normal) > 0);
   }
   case DIELECTRIC: {
-    attenuation = albedo;
-    float ri = rec.front_face ? (1.0 / refraction_index) : refraction_index;
+    attenuation = data.albedo;
+    float ri =
+        rec.front_face ? (1.0 / data.refraction_index) : data.refraction_index;
 
     vec3 unit_direction = glm::normalize(r_in.direction());
     float cos_theta = std::fmin(dot(-unit_direction, rec.normal), 1.0);
@@ -164,6 +165,6 @@ bool Cube::scatter_lambertian(const HitRecord &rec, color &attenuation,
   }
 
   scattered = ray(rec.point, scatter_direction);
-  attenuation = albedo;
+  attenuation = data.albedo;
   return true;
 }

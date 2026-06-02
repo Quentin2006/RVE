@@ -17,3 +17,5 @@ bool World::hit(const ray &r, float ray_min, float ray_max,
 
   return hit_anything;
 }
+
+bool World::loadFromFile(const std::ifstream &ifs) {}

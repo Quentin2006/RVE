@@ -5,7 +5,8 @@
 void App::run() {
 
   world.add(Cube(vec3{-1, 0, -4}, MaterialType::LAMBERTIAN, color{1, .5, .5}));
-  world.add(Cube(vec3{1, 0, -4}, MaterialType::METAL, color{.5, .5, 1}, .5));
+  world.add(
+      Cube(vec3{1, 0, -4}, MaterialType::DIELECTRIC, color{.5, .5, 1}, 0, 1.5));
   world.add(Cube(vec3{0, 1, -4}, MaterialType::METAL, color{.5, 1, .5}));
 
   if (SDL_SetRelativeMouseMode(SDL_TRUE) != 0) {

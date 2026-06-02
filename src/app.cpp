@@ -23,7 +23,6 @@ void App::run() {
   std::array<uint32_t, window::SIZE> pixels;
 
   float delta_time = 0;
-  float net_elapsed_time = 0;
   float fps_elapsed_time = 0;
   uint32_t fps_frame_count = 0;
 

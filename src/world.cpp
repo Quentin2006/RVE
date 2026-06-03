@@ -55,6 +55,10 @@ bool World::loadFromFile(const std::string &filename) {
     std::vector<std::string> v;
     boost::split(v, line, boost::is_any_of(" "));
 
+    if (v.size() >= 1 && (v[0] == "//" || v[0].empty() || v[0] == " ")) {
+      continue; // skip commnets or empty lines
+    }
+
     if (v.size() != 8) {
       std::cerr << "Error parsing world file: line " << lineNum
                 << " does not have 8 components" << std::endl;

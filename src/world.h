@@ -7,7 +7,7 @@
 class World {
 public:
   World() {};
-  World(const std::ifstream &ifs) { loadFromFile(ifs); }
+  World(const std::string &file) { loadFromFile(file); }
 
   int add(Cube &&to_add) {
     world.push_back(to_add);
@@ -36,7 +36,7 @@ public:
   auto end() { return world.end(); }
 
 private:
-  bool loadFromFile(const std::ifstream &ifs);
+  bool loadFromFile(const std::string &string);
 
   std::vector<Cube> world;
 

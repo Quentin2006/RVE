@@ -10,7 +10,7 @@
 class App {
 public:
   App() : world() {};
-  App(const std::ifstream &ifp) : world(ifp) {};
+  App(const std::string &file) : world(file) {};
   void run();
 
 private:

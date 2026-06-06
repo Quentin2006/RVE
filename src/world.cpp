@@ -59,9 +59,9 @@ bool World::loadFromFile(const std::string &filename) {
       continue; // skip commnets or empty lines
     }
 
-    if (v.size() != 8) {
+    if (v.size() != 8 && (v[3] == "0" && v.size() != 7)) {
       std::cerr << "Error parsing world file: line " << lineNum
-                << " does not have 8 components" << std::endl;
+                << " does not have correct # of components" << std::endl;
       continue;
     }
 

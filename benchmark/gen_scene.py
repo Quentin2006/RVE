@@ -16,7 +16,7 @@ DEFAULT_BRIGHTNESS = 1
 
 
 def make_scene(
-    size: tuple[int, int, int], lambertian, metal, dielectric, emissive
+    size: tuple[int, int, int], lambertian, metal, dielectric, emissive, none
 ) -> str:
 
     result = ""
@@ -37,6 +37,8 @@ def make_scene(
         materials.append([Material.DIELECTRIC, dielectric[0], dielectric[1]])
     if emissive:
         materials.append([Material.EMISSIVE, emissive[0], emissive[1]])
+    if none:
+        materials.append([None])
 
     x, y, z = size[0], size[1], size[2]
     for i in range(x):
@@ -44,6 +46,10 @@ def make_scene(
             for k in range(z):
                 # pick a random material for the current position
                 random_index = random.randint(0, len(materials) - 1)
+
+                if materials[random_index][0] is None:
+                    continue
+
                 material = materials[random_index]
                 # and generate random properties for it
                 print(material)
@@ -91,6 +97,12 @@ if __name__ == "__main__":
         help="Lambertian will be used",
     )
     parser.add_argument(
+        "-n",
+        "--none",
+        action="store_true",
+        help="Will have a gap in the scene with no material.",
+    )
+    parser.add_argument(
         "-m",
         "--metal",
         type=float,
@@ -116,6 +128,7 @@ if __name__ == "__main__":
         default=None,
         help="Emissive will be used with brightness in the range [min, max].",
     )
+
     args = parser.parse_args()
 
     if args.metal == []:
@@ -135,7 +148,12 @@ if __name__ == "__main__":
 
     # make scene
     scene = make_scene(
-        args.size, args.lambertian, args.metal, args.dielectric, args.emissive
+        args.size,
+        args.lambertian,
+        args.metal,
+        args.dielectric,
+        args.emissive,
+        args.none,
     )
 
     # write to file

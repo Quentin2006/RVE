@@ -4,10 +4,15 @@ import random
 
 
 class Material(Enum):
-    LAMBERTIAN = 1
-    METAL = 2
-    DIELECTRIC = 3
-    EMISSIVE = 4
+    LAMBERTIAN = 0
+    METAL = 1
+    DIELECTRIC = 2
+    EMISSIVE = 3
+
+
+DEFAULT_FUZZ = 0
+DEFAULT_REFRACTION_INDEX = 1.5
+DEFAULT_BRIGHTNESS = 1
 
 
 def make_scene(
@@ -85,30 +90,48 @@ if __name__ == "__main__":
         action="store_true",
         help="Lambertian will be used",
     )
-
     parser.add_argument(
         "-m",
         "--metal",
         type=float,
-        nargs=2,
-        help="Metal will be used, and its fuzz factor will be in the range of the passed 2 vals",
+        nargs="*",
+        default=None,
+        help="Metal will be used with fuzziness in the range [min, max].",
     )
+
     parser.add_argument(
         "-d",
         "--dielectric",
         type=float,
-        nargs=2,
-        help="Dielectric will be used, and its refraction index will be in the range of the passed 2 vals",
+        nargs="*",
+        default=None,
+        help="Dielectric will be used with refraction index in the range [min, max].",
     )
+
     parser.add_argument(
         "-e",
         "--emissive",
         type=float,
-        nargs=2,
-        help="Emissive will be used, and its brightness will be in the range of the passed 2 vals",
+        nargs="*",
+        default=None,
+        help="Emissive will be used with brightness in the range [min, max].",
     )
-
     args = parser.parse_args()
+
+    if args.metal == []:
+        args.metal = [DEFAULT_FUZZ, DEFAULT_FUZZ]
+    elif args.metal is not None and len(args.metal) != 2:
+        parser.error("--metal requires either 0 or 2 values")
+
+    if args.dielectric == []:
+        args.dielectric = [DEFAULT_REFRACTION_INDEX, DEFAULT_REFRACTION_INDEX]
+    elif args.dielectric is not None and len(args.dielectric) != 2:
+        parser.error("--dielectric requires either 0 or 2 values")
+
+    if args.emissive == []:
+        args.emissive = [DEFAULT_BRIGHTNESS, DEFAULT_BRIGHTNESS]
+    elif args.emissive is not None and len(args.emissive) != 2:
+        parser.error("--emissive requires either 0 or 2 values")
 
     # make scene
     scene = make_scene(

@@ -76,7 +76,7 @@ void App::run() {
 
     const auto end{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> elapsed_seconds{end - start};
-    delta_time = elapsed_seconds.count();
+    delta_time = static_cast<float>(elapsed_seconds.count());
 
     fps_elapsed_time += delta_time;
     ++fps_frame_count;
@@ -84,7 +84,7 @@ void App::run() {
     if (fps_elapsed_time >= 1.f) {
       const float avg_fps =
           static_cast<float>(fps_frame_count) / fps_elapsed_time;
-      std::cerr << "FPS: " << avg_fps << '\n';
+      std::cout << "FPS " << avg_fps << std::endl;
       fps_elapsed_time = 0.f;
       fps_frame_count = 0;
     }

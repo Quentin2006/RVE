@@ -2,30 +2,44 @@ CXX := g++
 
 SRC_DIR := src
 BIN_DIR := bin
+OBJ_DIR := obj
+
 TARGET := $(BIN_DIR)/rve
 
-INCLUDES := -I/usr/include/SDL2 -I/usr/include/glm
-LIBS := -lSDL2 -lm
+CPPFLAGS := -I/usr/include/SDL2 -I/usr/include/glm
+LDLIBS := -lSDL2 -lm
 
-CXXFLAGS_COMMON := -std=c++20 -Wall -Wextra -Wpedantic -pipe
-CXXFLAGS_RELEASE := -O3 -flto -DNDEBUG
-CXXFLAGS_DEBUG := -Og -g
+CXXFLAGS_COMMON := -std=c++20 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wformat=2
+CXXFLAGS_DEBUG  := -Og -g3
+CXXFLAGS_RELEASE:= -O3 -march=native -flto -DNDEBUG
+CXXFLAGS_BENCHMARK := -O3 -march=native -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls -DNDEBUG
 
 BUILD ?= release
 
 ifeq ($(BUILD),debug)
-	CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_DEBUG)
+    CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_DEBUG)
+else ifeq ($(BUILD),release)
+    CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_RELEASE)
+else ifeq ($(BUILD),benchmark)
+    CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_BENCHMARK)
 else
-	CXXFLAGS := $(CXXFLAGS_COMMON) $(CXXFLAGS_RELEASE)
+    $(error Unknown BUILD=$(BUILD))
 endif
 
 SRCS := $(shell find $(SRC_DIR) -type f -name '*.cpp')
-HDRS := $(shell find $(SRC_DIR) -type f \( -name '*.h' -o -name '*.hpp' \))
+OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
+DEPS := $(OBJS:.o=.d)
+
+.DEFAULT_GOAL := all
 
 all: $(TARGET)
 
-$(TARGET): $(SRCS) $(HDRS) | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) -o $@ $(LIBS)
+$(TARGET): $(OBJS) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDLIBS)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(BIN_DIR):
 	mkdir -p $@
@@ -33,11 +47,11 @@ $(BIN_DIR):
 run: $(TARGET)
 	./$(TARGET)
 
-clean:
-	rm -rf $(BIN_DIR)
-
 benchmark:
 	python3 benchmark.py
+
+clean:
+	rm -rf $(BIN_DIR) $(OBJ_DIR)
 
 M ?= update
 
@@ -46,4 +60,6 @@ git:
 	git commit -m "$(M)"
 	git push
 
-.PHONY: all run clean benchmark git
+-include $(DEPS)
+
+.PHONY: all run benchmark clean git

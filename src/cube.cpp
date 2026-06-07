@@ -17,7 +17,7 @@ inline vec3 random_unit_vector() {
   return glm::normalize(random_direction);
 }
 inline float random_float() {
-  static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+  static std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
   static std::mt19937 generator;
   return distribution(generator);
 }
@@ -41,16 +41,16 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max,
 
   float tMin = -std::numeric_limits<float>::infinity();
   float tMax = std::numeric_limits<float>::infinity();
-  int enterFace = 0;
-  int exitFace = 0;
+  uint enterFace = 0;
+  uint exitFace = 0;
 
   for (int axis = 0; axis < 3; ++axis) {
     const float axisOrigin = origin[axis];
     const float axisDirection = direction[axis];
     const float slabMin = minCorner[axis];
     const float slabMax = maxCorner[axis];
-    int nearFace = axis * 2;
-    int farFace = axis * 2 + 1;
+    const int nearFace = axis * 2;
+    const int farFace = axis * 2 + 1;
 
     if (std::abs(axisDirection) < math::K_EPSILON) {
       if (axisOrigin < slabMin || axisOrigin > slabMax) {
@@ -63,18 +63,19 @@ bool Cube::hit(const ray &r, float ray_min, float ray_max,
     float t0 = (slabMin - axisOrigin) * invDirection;
     float t1 = (slabMax - axisOrigin) * invDirection;
 
+    const int useNearFace = t0 > t1 ? farFace : nearFace;
+    const int useFarFace = t0 > t1 ? nearFace : farFace;
     if (t0 > t1) {
       std::swap(t0, t1);
-      std::swap(nearFace, farFace);
     }
 
     if (t0 > tMin) {
       tMin = t0;
-      enterFace = nearFace;
+      enterFace = static_cast<uint>(useNearFace);
     }
     if (t1 < tMax) {
       tMax = t1;
-      exitFace = farFace;
+      exitFace = static_cast<uint>(useFarFace);
     }
 
     if (tMin > tMax || tMin > ray_max) {
@@ -133,11 +134,11 @@ bool Cube::scatter(const ray &r_in, const HitRecord &rec, color &attenuation,
   case DIELECTRIC: {
     attenuation = data.albedo;
     float ri =
-        rec.front_face ? (1.0 / data.refraction_index) : data.refraction_index;
+        rec.front_face ? (1.0f / data.refraction_index) : data.refraction_index;
 
     vec3 unit_direction = glm::normalize(r_in.direction());
-    float cos_theta = std::fmin(dot(-unit_direction, rec.normal), 1.0);
-    float sin_theta = std::sqrt(1.0 - cos_theta * cos_theta);
+    float cos_theta = std::fmin(dot(-unit_direction, rec.normal), 1.0f);
+    float sin_theta = std::sqrt(1.0f - cos_theta * cos_theta);
 
     bool cannot_refract = ri * sin_theta > 1.0;
     vec3 direction;

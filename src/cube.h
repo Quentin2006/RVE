@@ -84,7 +84,7 @@ private:
   bool scatter_lambertian(const HitRecord &rec, color &attenuation,
                           ray &scattered) const;
 
-  float reflectance(double cosine, double refraction_index) const {
+  double reflectance(double cosine, double refraction_index) const {
     // Use Schlick's approximation for reflectance.
     auto r0 = (1 - refraction_index) / (1 + refraction_index);
     r0 = r0 * r0;

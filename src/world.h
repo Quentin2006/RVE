@@ -9,21 +9,21 @@ public:
   World() {};
   World(const std::string &file) { loadFromFile(file); }
 
-  int add(Cube &&to_add) {
+  uint add(Cube &&to_add) {
     world.push_back(to_add);
     return id++;
   }
 
-  void remove(uint id) {
-    if (id < world.size()) {
-      world[id] = Cube(VoxelData{MaterialType::NONE, color(0, 0, 0), 0, 1.5f,
-                                 1.0f, vec3{0, 0, 0}});
+  void remove(uint objectId) {
+    if (objectId < world.size()) {
+      world[objectId] = Cube(VoxelData{MaterialType::NONE, color(0, 0, 0), 0, 1.5f,
+                                       1.0f, vec3{0, 0, 0}});
     }
   }
 
-  void updateRefractionIndex(uint id, float newRefractionIndex) {
-    if (id < world.size()) {
-      world[id].setRefractionIndex(newRefractionIndex);
+  void updateRefractionIndex(uint objectId, float newRefractionIndex) {
+    if (objectId < world.size()) {
+      world[objectId].setRefractionIndex(newRefractionIndex);
     }
   }
 

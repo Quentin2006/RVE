@@ -65,6 +65,18 @@ void Camera::render(const World &world,
   const auto pixel00_loc =
       viewport_upper_left + 0.5f * (pixel_delta_u + pixel_delta_v);
 
+  const CameraData camera_data{forward,
+                               right,
+                               up,
+                               viewport_u,
+                               viewport_v,
+                               pixel_delta_u,
+                               pixel_delta_v,
+                               viewport_upper_left,
+                               pixel00_loc,
+                               orientation};
+
+  renderWorld(camera_data, world, pixels);
   for (uint32_t j = 0; j < height; j++) {
     const auto row_start =
         pixel00_loc + (static_cast<float>(j) * pixel_delta_v);

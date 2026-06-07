@@ -6,7 +6,25 @@
 #include "world.h"
 #include <array>
 #include <cstdint>
+#include <glm/gtc/quaternion.hpp>
 #include <random>
+
+struct CameraData {
+  vec3 forward;
+  vec3 right;
+  vec3 up;
+  vec3 viewport_u;
+  vec3 viewport_v;
+  vec3 pixel_delta_u;
+  vec3 pixel_delta_v;
+  vec3 viewport_upper_left;
+  vec3 pixel00_loc;
+  glm::quat orientation;
+};
+
+void testCudaKernel();
+void renderWorld(const CameraData &data, const World &world,
+                 std::array<uint32_t, window::SIZE> &pixels);
 
 class Camera {
 public:

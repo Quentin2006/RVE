@@ -1,4 +1,5 @@
 CXX := g++
+NVCC := nvcc
 
 SRC_DIR := src
 BIN_DIR := bin
@@ -11,7 +12,7 @@ LDLIBS := -lSDL2 -lm
 
 CXXFLAGS_COMMON := -std=c++20 -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wformat=2
 CXXFLAGS_DEBUG  := -Og -g3
-CXXFLAGS_RELEASE:= -O3 -march=native -flto -DNDEBUG
+CXXFLAGS_RELEASE:= -O3 -march=native -DNDEBUG
 CXXFLAGS_BENCHMARK := -O3 -march=native -g3 -fno-omit-frame-pointer -fno-optimize-sibling-calls -DNDEBUG
 
 BUILD ?= release
@@ -26,20 +27,31 @@ else
     $(error Unknown BUILD=$(BUILD))
 endif
 
-SRCS := $(shell find $(SRC_DIR) -type f -name '*.cpp')
-OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))
-DEPS := $(OBJS:.o=.d)
+# nvcc flags — arch matches RTX 3060 Ti (sm_86). Adjust for your GPU.
+NVCCFLAGS := -arch=sm_86 $(CPPFLAGS) --std=c++20 -DNDEBUG
+
+SRCS_CPP := $(shell find $(SRC_DIR) -type f -name '*.cpp')
+SRCS_CU  := $(shell find $(SRC_DIR) -type f -name '*.cu')
+
+OBJS_CPP := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS_CPP))
+OBJS_CU  := $(patsubst $(SRC_DIR)/%.cu,$(OBJ_DIR)/%_cu.o,$(SRCS_CU))
+OBJS     := $(OBJS_CPP) $(OBJS_CU)
+DEPS     := $(OBJS_CPP:.o=.d)
 
 .DEFAULT_GOAL := all
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS) | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDLIBS)
+	$(NVCC) $(OBJS) -o $@ $(LDLIBS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
+$(OBJ_DIR)/%_cu.o: $(SRC_DIR)/%.cu
+	@mkdir -p $(dir $@)
+	$(NVCC) $(NVCCFLAGS) -c $< -o $@
 
 $(BIN_DIR):
 	mkdir -p $@

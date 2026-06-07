@@ -1,0 +1,37 @@
+=== System Information ===
+System:
+  Host: archlinux Kernel: 7.0.11-arch1-1 arch: x86_64 bits: 64
+  Desktop: Hyprland v: 0.55.2 Distro: Arch Linux
+Memory:
+  System RAM: total: 32 GiB available: 31.15 GiB used: 7.12 GiB (22.9%)
+  Array-1: capacity: 256 GiB slots: 4 modules: 2 EC: None
+  Device-1: Controller0-DIMM0 type: no module installed
+  Device-2: Controller0-DIMM1 type: DDR5 size: 16 GiB speed: 5600 MT/s
+  Device-3: Controller1-DIMM0 type: no module installed
+  Device-4: Controller1-DIMM1 type: DDR5 size: 16 GiB speed: 5600 MT/s
+CPU:
+  Info: 6-core model: 12th Gen Intel Core i5-12400F bits: 64 type: MT MCP
+    cache: L2: 7.5 MiB
+  Speed (MHz): avg: 3998 min/max: 800/4400 cores: 1: 3998 2: 3998 3: 3998
+    4: 3998 5: 3998 6: 3998 7: 3998 8: 3998 9: 3998 10: 3998 11: 3998 12: 3998
+Graphics:
+  Device-1: NVIDIA GA104 [GeForce RTX 3060 Ti Lite Hash Rate] driver: nvidia
+    v: 610.43.02
+  Device-2: EMEET HD Webcam C950 driver: snd-usb-audio,uvcvideo type: USB
+  Display: wayland server: X.org v: 1.21.1.23 with: Xwayland v: 24.1.12
+    compositor: Hyprland v: 0.55.2 driver: X: loaded: nvidia
+    unloaded: modesetting gpu: nv_platform,nvidia,nvidia-nvswitch
+    resolution: 3440x1440~175Hz
+  API: EGL v: 1.5 drivers: nvidia,swrast
+    platforms: gbm,wayland,x11,surfaceless,device
+  API: OpenGL v: 4.6.0 compat-v: 4.6 vendor: nvidia mesa v: 610.43.02
+    renderer: NVIDIA GeForce RTX 3060 Ti/PCIe/SSE2
+  API: Vulkan v: 1.4.350 drivers: nvidia surfaces: N/A
+  Info: Tools: api: eglinfo, glxinfo, vulkaninfo gpu: lact,
+    nvidia-settings, nvidia-smi x11: xprop,xrandr
+
+
+=== Benchmark Results ===
+Start Time : 2026-06-06-20:35:44
+End Time   : 2026-06-06-20:40:12
+Total Time : 0:04:28 seconds

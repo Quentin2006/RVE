@@ -102,7 +102,6 @@ if __name__ == "__main__":
 
     # FIXME: skipping 50x50x50 for now since it takes waaaay too long
     scenes = [scene for scene in scenes if "50x50x50" not in scene]
-    scenes = [scene for scene in scenes if "10x10x10" not in scene]
 
     start_time = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
 
@@ -110,7 +109,10 @@ if __name__ == "__main__":
         spinner.text = f"benchmarking {scene}"
 
         # the type of material, sparse or full, and the scene name
-        (material, scene_type, scene_name) = scene.strip(SCENES_DIR).split("/")[0:3]
+        scene_path = Path(scene)
+        (material, scene_type, scene_name) = scene_path.relative_to(SCENES_DIR).parts[
+            0:3
+        ]
 
         dir_path = Path(
             f"{RESULTS_DIR}/{start_time}/{material}/{scene_type}/{scene_name}"

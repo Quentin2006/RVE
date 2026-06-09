@@ -35,8 +35,10 @@ void testCudaKernel() {
   cudaFree(d_c);
 }
 
-void renderWorld(const CameraData &data, const World &world,
-                 std::array<uint32_t, window::SIZE> &pixels) {
+void renderWorld(const CameraData &host_data, const World &host_world,
+                 std::array<uint32_t, window::SIZE> &host_pixels) {
+
+  std::array<uint32_t, window::SIZE> device_pixels;
 
   // for (uint32_t j = 0; j < height; j++) {
   //   const auto row_start =

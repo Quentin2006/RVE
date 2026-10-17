@@ -1,9 +1,11 @@
 #include "world.h"
 #include "cube.h"
 #include <boost/algorithm/string.hpp>
+#include <algorithm>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <random>
 #include <string>
 
@@ -44,7 +46,9 @@ void World::generate(unsigned int seed, glm::ivec3 dims,
     break;
   }
 
-  if (config.sparse) {
+  // In count mode every placed cube is a real material, the sparse gap
+  // pool only makes sense for the whole-grid fill mode.
+  if (config.sparse && !config.count) {
     add_material(MaterialType::NONE, {0.f, 0.f});
   }
 
@@ -55,6 +59,84 @@ void World::generate(unsigned int seed, glm::ivec3 dims,
   std::uniform_int_distribution<size_t> pick_material{0, pool.size() - 1};
   std::uniform_real_distribution<float> unit{0.f, 1.f};
 
+  const auto make_cube = [&](const PoolEntry &entry, int x, int y, int z) {
+    VoxelData lineData;
+    lineData.mat = entry.mat;
+
+    const float r = unit(rng);
+    const float g = unit(rng);
+    const float b = unit(rng);
+    lineData.albedo = {r, g, b};
+
+    // Materials with an extra parameter pick it like gen_scene.py does:
+    // uniformly from the parameter range, in hundredths.
+    if (entry.mat != MaterialType::LAMBERTIAN) {
+      std::uniform_int_distribution<int> pick_param{
+          static_cast<int>(entry.param_range.x * 100.f),
+          static_cast<int>(entry.param_range.y * 100.f)};
+      const float param =
+          static_cast<float>(pick_param(rng)) / 100.f;
+
+      switch (entry.mat) {
+      case MaterialType::METAL:
+        lineData.fuzz = param;
+        break;
+      case MaterialType::DIELECTRIC:
+        lineData.refraction_index = param;
+        break;
+      case MaterialType::EMISSIVE:
+        lineData.brightness = param;
+        break;
+      default:
+        break;
+      }
+    }
+
+    lineData.pos = {static_cast<float>(x), static_cast<float>(y),
+                    static_cast<float>(z)};
+    return Cube(lineData);
+  };
+
+  if (config.count) {
+    const size_t capacity = static_cast<size_t>(dims.x) *
+                            static_cast<size_t>(dims.y) *
+                            static_cast<size_t>(dims.z);
+    if (capacity == 0) {
+      return;
+    }
+
+    const size_t count = std::min<size_t>(*config.count, capacity);
+    if (count < *config.count) {
+      std::cerr << "Error: requested " << *config.count
+                << " cubes but the grid only has " << capacity
+                << " slots, increase --size\n";
+      return;
+    }
+
+    // Choose count unique slots with a partial Fisher-Yates shuffle and
+    // decode the linear slot index back into (x, y, z), same layout the
+    // fill mode below iterates in.
+    std::vector<size_t> slots(capacity);
+    std::iota(slots.begin(), slots.end(), 0);
+
+    const size_t stride_x = static_cast<size_t>(dims.x);
+    const size_t stride_y = stride_x * static_cast<size_t>(dims.y);
+
+    for (size_t placed = 0; placed < count; ++placed) {
+      std::uniform_int_distribution<size_t> pick_slot{placed, capacity - 1};
+      std::swap(slots[placed], slots[pick_slot(rng)]);
+
+      const size_t index = slots[placed];
+      const int x = static_cast<int>(index % stride_x);
+      const int y =
+          static_cast<int>((index / stride_x) % static_cast<size_t>(dims.y));
+      const int z = static_cast<int>(index / stride_y);
+
+      add(make_cube(pool[pick_material(rng)], x, y, z));
+    }
+    return;
+  }
+
   for (int z = 0; z < dims.z; ++z) {
     for (int y = 0; y < dims.y; ++y) {
       for (int x = 0; x < dims.x; ++x) {
@@ -63,42 +145,7 @@ void World::generate(unsigned int seed, glm::ivec3 dims,
           continue;
         }
 
-        VoxelData lineData;
-        lineData.mat = entry.mat;
-
-        const float r = unit(rng);
-        const float g = unit(rng);
-        const float b = unit(rng);
-        lineData.albedo = {r, g, b};
-
-        // Materials with an extra parameter pick it like gen_scene.py does:
-        // uniformly from the parameter range, in hundredths.
-        if (entry.mat != MaterialType::LAMBERTIAN) {
-          std::uniform_int_distribution<int> pick_param{
-              static_cast<int>(entry.param_range.x * 100.f),
-              static_cast<int>(entry.param_range.y * 100.f)};
-          const float param =
-              static_cast<float>(pick_param(rng)) / 100.f;
-
-          switch (entry.mat) {
-          case MaterialType::METAL:
-            lineData.fuzz = param;
-            break;
-          case MaterialType::DIELECTRIC:
-            lineData.refraction_index = param;
-            break;
-          case MaterialType::EMISSIVE:
-            lineData.brightness = param;
-            break;
-          default:
-            break;
-          }
-        }
-
-        lineData.pos = {static_cast<float>(x), static_cast<float>(y),
-                        static_cast<float>(z)};
-
-        World::add(Cube(lineData));
+        add(make_cube(entry, x, y, z));
       }
     }
   }

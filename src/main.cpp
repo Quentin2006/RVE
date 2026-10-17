@@ -24,6 +24,7 @@ void print_usage(const char *program) {
          "  -w, --world <file>     Path to a world file (skips generation)\n"
          "  -s, --seed <N>         Seed used to generate a world\n"
          "      --size <WxHxD>     Dimensions of the generated world\n"
+         "  -c, --count <N>        Generate exactly N cubes (overrides --density)\n"
          "      --material <NAME>  lambertian, metal, dielectric, emissive or random\n"
          "      --density <MODE>   full or sparse\n"
          "  -h, --help             Display this help message and exit\n"
@@ -97,6 +98,7 @@ int main(int argc, char *argv[]) {
       {"world", required_argument, nullptr, 'w'},
       {"seed", required_argument, nullptr, 's'},
       {"size", required_argument, nullptr, 'z'},
+      {"count", required_argument, nullptr, 'c'},
       {"material", required_argument, nullptr, 'm'},
       {"density", required_argument, nullptr, 'd'},
       {"help", no_argument, nullptr, 'h'},
@@ -104,8 +106,8 @@ int main(int argc, char *argv[]) {
   };
 
   int opt;
-  while ((opt = getopt_long(argc, argv, "w:s:z:m:d:h", long_options, nullptr)) !=
-         -1) {
+  while ((opt = getopt_long(argc, argv, "w:s:z:m:d:hc", long_options,
+                            nullptr)) != -1) {
     switch (opt) {
     case 'w':
       options.world_file = optarg;
@@ -120,6 +122,18 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
       }
       options.seed = static_cast<unsigned int>(seed);
+      break;
+    }
+    case 'c': {
+      char *end = nullptr;
+      const unsigned long count = std::strtoul(optarg, &end, 10);
+      if (end == optarg || *end != '\0' ||
+          count > std::numeric_limits<unsigned int>::max()) {
+        fprintf(stderr, "Error: --count expects an integer, got '%s'\n",
+                optarg);
+        exit(EXIT_FAILURE);
+      }
+      options.scene.count = static_cast<unsigned int>(count);
       break;
     }
     case 'z':
@@ -159,6 +173,28 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: unexpected argument '%s'\n", argv[optind]);
     print_usage(argv[0]);
     exit(EXIT_FAILURE);
+  }
+
+  if (options.world_file && options.scene.count) {
+    fprintf(stderr, "Error: --count only applies to generated worlds, not "
+                    "--world files\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (options.scene.count && !options.world_file) {
+    const unsigned long long capacity =
+        static_cast<unsigned long long>(options.size.x) *
+        static_cast<unsigned long long>(options.size.y) *
+        static_cast<unsigned long long>(options.size.z);
+    if (*options.scene.count > capacity) {
+      fprintf(stderr,
+              "Error: --count %u exceeds the %dx%dx%d grid, "
+              "which has %llu slots; increase --size\n",
+              *options.scene.count, options.size.x, options.size.y,
+              options.size.z,
+              static_cast<unsigned long long>(capacity));
+      exit(EXIT_FAILURE);
+    }
   }
 
   if (options.world_file) {

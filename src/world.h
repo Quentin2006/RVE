@@ -2,6 +2,7 @@
 
 #include "cube.h"
 #include <fstream>
+#include <optional>
 #include <vector>
 
 enum class SceneMaterial { LAMBERTIAN, METAL, DIELECTRIC, EMISSIVE, RANDOM };
@@ -17,6 +18,11 @@ struct SceneConfig {
   glm::vec2 fuzz_range{0.0f, 0.0f};
   glm::vec2 refraction_range{1.5f, 1.5f};
   glm::vec2 brightness_range{1.0f, 1.0f};
+
+  // Generate exactly this many cubes in randomly chosen grid slots.
+  // When set, every placed cube is a real material (the sparse gap pool
+  // is skipped) and --density has no effect.
+  std::optional<unsigned int> count;
 };
 
 class World {

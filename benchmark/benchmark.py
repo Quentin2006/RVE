@@ -1,4 +1,4 @@
-import glob
+import argparse
 import subprocess
 from halo import Halo
 from datetime import datetime
@@ -6,7 +6,12 @@ from pathlib import Path
 import signal
 
 
-SCENES_DIR = "./benchmark/scenes"
+MATERIALS = ["lambertian", "metal", "dielectric", "emissive", "random"]
+DENSITIES = ["full", "sparse"]
+SIZES = ["5x5x5", "10x10x10", "50x50x50"]
+
+DEFAULT_SEED = 42
+
 RESULTS_DIR = "./benchmark/results"
 NUM_SAMPLES = 5
 FPS_FILE_NAME = "fps.txt"
@@ -38,7 +43,7 @@ def build_flamegraph(dir_path: str, data_name: str) -> None:
     flamegraph.communicate()
 
 
-def benchmark(scene: str, dir_path: str) -> list[str]:
+def benchmark(run_args: list[str], dir_path: str) -> list[str]:
     proc = subprocess.Popen(
         [
             "perf",
@@ -50,8 +55,7 @@ def benchmark(scene: str, dir_path: str) -> list[str]:
             dir_path + "/perf.data",
             "--",
             RVE_BIN_PATH,
-            "-w",
-            scene,
+            *run_args,
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
@@ -78,11 +82,47 @@ def benchmark(scene: str, dir_path: str) -> list[str]:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog="benchmark",
+        description="Benchmark RVE over a matrix of seeded generated worlds.",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=DEFAULT_SEED,
+        help="Seed used to generate every benchmarked world (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--material",
+        type=str,
+        choices=MATERIALS,
+        action="append",
+        help="Restrict the matrix to this material, repeatable.",
+    )
+    parser.add_argument(
+        "--density",
+        type=str,
+        choices=DENSITIES,
+        action="append",
+        help="Restrict the matrix to this density, repeatable.",
+    )
+    parser.add_argument(
+        "--size",
+        type=str,
+        choices=SIZES,
+        action="append",
+        help="Restrict the matrix to this size, repeatable.",
+    )
+    args = parser.parse_args()
+
+    materials = args.material or MATERIALS
+    densities = args.density or DENSITIES
+    sizes = args.size or SIZES
+
     # make clean all
     spinner.text = "building"
     spinner.start()
     try:
-        # Intentionally running a failing command
         subprocess.run(
             ["make", "clean", "all", "BUILD=benchmark"],
             check=True,
@@ -95,42 +135,42 @@ if __name__ == "__main__":
         print(f"Error message: {e.stderr}")
         exit(1)
 
-    # glob all files in scenes directory
-    spinner.text = "getting scenes"
-    scenes = glob.glob(f"{SCENES_DIR}/**/*.scene", recursive=True)
-    scenes.sort()
-
-    # FIXME: skipping 50x50x50 for now since it takes waaaay too long
-    scenes = [scene for scene in scenes if "50x50x50" not in scene]
-
     start_time = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
 
-    for scene in scenes:
-        spinner.text = f"benchmarking {scene}"
+    for material in materials:
+        for density in densities:
+            for size in sizes:
+                # FIXME: skipping 50x50x50 for now since it takes waaaay too long
+                if size == "50x50x50":
+                    continue
 
-        # the type of material, sparse or full, and the scene name
-        scene_path = Path(scene)
-        (material, scene_type, scene_name) = scene_path.relative_to(SCENES_DIR).parts[
-            0:3
-        ]
+                spinner.text = f"benchmarking {material}/{density}/{size}"
 
-        dir_path = Path(
-            f"{RESULTS_DIR}/{start_time}/{material}/{scene_type}/{scene_name}"
-        )
-        dir_path.mkdir(parents=True, exist_ok=True)
+                run_args = [
+                    "--seed",
+                    str(args.seed),
+                    "--size",
+                    size,
+                    "--material",
+                    material,
+                    "--density",
+                    density,
+                ]
 
-        # profile each file getting the avg fps, and flamegraph and more data???
-        fps = "\n".join(benchmark(scene, str(dir_path)))
+                dir_path = Path(
+                    f"{RESULTS_DIR}/{start_time}/{material}/{density}/{size}"
+                )
+                dir_path.mkdir(parents=True, exist_ok=True)
 
-        with open(
-            f"{dir_path}/{FPS_FILE_NAME}",
-            "w",
-            encoding="utf-8",
-        ) as file:
-            file.write(fps)
+                # profile each run getting the avg fps, flamegraph and more data???
+                fps = "\n".join(benchmark(run_args, str(dir_path)))
 
-        # make folder in results with the timedate and save the results there
-        spinner.text = "saving results"
+                with open(
+                    f"{dir_path}/{FPS_FILE_NAME}",
+                    "w",
+                    encoding="utf-8",
+                ) as file:
+                    file.write(fps)
 
     # lets add some metadata to the results
     system_spec = subprocess.run(
@@ -145,7 +185,7 @@ if __name__ == "__main__":
         f"{RESULTS_DIR}/{start_time}/metadata.txt", "w", encoding="utf-8"
     ) as file:
         file.write("=== System Information ===\n")
-
+        file.write(f"Seed       : {args.seed}\n")
         file.write(f"{system_spec.stdout}\n\n")
 
         file.write("=== Benchmark Results ===\n")

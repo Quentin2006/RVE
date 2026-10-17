@@ -11,6 +11,10 @@ class App {
 public:
   App() : world() {};
   App(const std::string &file) : world(file) {};
+  // Generates a deterministic world from a seed and scene configuration.
+  App(unsigned int seed, glm::ivec3 dims, const SceneConfig &scene) {
+    world.generate(seed, dims, scene);
+  }
   void run();
 
 private:

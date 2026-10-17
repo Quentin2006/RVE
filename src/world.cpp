@@ -1,9 +1,108 @@
 #include "world.h"
 #include "cube.h"
 #include <boost/algorithm/string.hpp>
+#include <cstddef>
 #include <fstream>
 #include <iostream>
+#include <random>
 #include <string>
+
+void World::generate(unsigned int seed, glm::ivec3 dims,
+                     const SceneConfig &config) {
+  std::mt19937 rng{seed};
+
+  // One entry per selectable material. NONE marks a voxel that simply keeps
+  // its gap, like the --none option in gen_scene.py.
+  struct PoolEntry {
+    MaterialType mat{MaterialType::NONE};
+    glm::vec2 param_range{0.f, 0.f}; // min/max of the material specific parameter
+  };
+
+  std::vector<PoolEntry> pool;
+  const auto add_material = [&pool](MaterialType mat, glm::vec2 param_range) {
+    pool.push_back({mat, param_range});
+  };
+
+  switch (config.material) {
+  case SceneMaterial::LAMBERTIAN:
+    add_material(MaterialType::LAMBERTIAN, {0.f, 0.f});
+    break;
+  case SceneMaterial::METAL:
+    add_material(MaterialType::METAL, config.fuzz_range);
+    break;
+  case SceneMaterial::DIELECTRIC:
+    add_material(MaterialType::DIELECTRIC, config.refraction_range);
+    break;
+  case SceneMaterial::EMISSIVE:
+    add_material(MaterialType::EMISSIVE, config.brightness_range);
+    break;
+  case SceneMaterial::RANDOM:
+    add_material(MaterialType::LAMBERTIAN, {0.f, 0.f});
+    add_material(MaterialType::METAL, config.fuzz_range);
+    add_material(MaterialType::DIELECTRIC, config.refraction_range);
+    add_material(MaterialType::EMISSIVE, config.brightness_range);
+    break;
+  }
+
+  if (config.sparse) {
+    add_material(MaterialType::NONE, {0.f, 0.f});
+  }
+
+  if (pool.empty()) {
+    return;
+  }
+
+  std::uniform_int_distribution<size_t> pick_material{0, pool.size() - 1};
+  std::uniform_real_distribution<float> unit{0.f, 1.f};
+
+  for (int z = 0; z < dims.z; ++z) {
+    for (int y = 0; y < dims.y; ++y) {
+      for (int x = 0; x < dims.x; ++x) {
+        const PoolEntry &entry = pool[pick_material(rng)];
+        if (entry.mat == MaterialType::NONE) {
+          continue;
+        }
+
+        VoxelData lineData;
+        lineData.mat = entry.mat;
+
+        const float r = unit(rng);
+        const float g = unit(rng);
+        const float b = unit(rng);
+        lineData.albedo = {r, g, b};
+
+        // Materials with an extra parameter pick it like gen_scene.py does:
+        // uniformly from the parameter range, in hundredths.
+        if (entry.mat != MaterialType::LAMBERTIAN) {
+          std::uniform_int_distribution<int> pick_param{
+              static_cast<int>(entry.param_range.x * 100.f),
+              static_cast<int>(entry.param_range.y * 100.f)};
+          const float param =
+              static_cast<float>(pick_param(rng)) / 100.f;
+
+          switch (entry.mat) {
+          case MaterialType::METAL:
+            lineData.fuzz = param;
+            break;
+          case MaterialType::DIELECTRIC:
+            lineData.refraction_index = param;
+            break;
+          case MaterialType::EMISSIVE:
+            lineData.brightness = param;
+            break;
+          default:
+            break;
+          }
+        }
+
+        lineData.pos = {static_cast<float>(x), static_cast<float>(y),
+                        static_cast<float>(z)};
+
+        World::add(Cube(lineData));
+      }
+    }
+  }
+}
 
 bool World::hit(const ray &r, float ray_min, float ray_max,
                 HitRecord &rec) const {

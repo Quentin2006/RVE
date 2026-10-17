@@ -15,6 +15,33 @@ glm::quat cameraOrientation(float yaw, float pitch) {
   const glm::quat pitchQuat = glm::angleAxis(-pitch, rightAxis);
   return pitchQuat * yawQuat;
 }
+
+color ray_color(const ray &r, const World &world, int depth) {
+  if (depth <= 0)
+    return color(0, 0, 0);
+
+  HitRecord rec;
+
+  // If the ray hits nothing, return the background color.
+  if (!world.hit(r, math::K_EPSILON, INFINITY, rec)) {
+    vec3 unit_direction = glm::normalize(r.direction());
+    float a = 0.5f * (unit_direction.y + 1.0f);
+    return (1.0f - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
+  }
+
+  ray scattered;
+  color attenuation;
+  color color_from_emission;
+  rec.hit_object->emitted(color_from_emission);
+
+  if (!rec.hit_object->scatter(r, rec, attenuation, scattered))
+    return color_from_emission;
+
+  color color_from_scatter =
+      attenuation * ray_color(scattered, world, depth - 1);
+
+  return color_from_emission + color_from_scatter;
+}
 } // namespace
 
 Camera::Camera(uint32_t _width, uint32_t _height)
@@ -65,7 +92,8 @@ void Camera::render(const World &world,
   const auto pixel00_loc =
       viewport_upper_left + 0.5f * (pixel_delta_u + pixel_delta_v);
 
-  const CameraData camera_data{forward,
+  const CameraData camera_data{center,
+                               forward,
                                right,
                                up,
                                viewport_u,
@@ -76,58 +104,39 @@ void Camera::render(const World &world,
                                pixel00_loc,
                                orientation};
 
-  renderWorld(camera_data, world, pixels);
+  renderWorld(camera_data, world, pixels, rng);
+}
+
+void renderWorld(const CameraData &data, const World &world,
+                 std::array<uint32_t, window::SIZE> &pixels,
+                 std::mt19937 &rng) {
+  const uint32_t width = static_cast<uint32_t>(window::WIDTH);
+  const uint32_t height = static_cast<uint32_t>(window::HEIGHT);
+  std::uniform_real_distribution<float> jitter(-0.5f, 0.5f);
+
   for (uint32_t j = 0; j < height; j++) {
     const auto row_start =
-        pixel00_loc + (static_cast<float>(j) * pixel_delta_v);
-    auto *row = pixels.data() + (j * width);
+        data.pixel00_loc + (static_cast<float>(j) * data.pixel_delta_v);
+    auto *row = pixels.data() + (static_cast<size_t>(j) * width);
     auto pixel_center = row_start;
     for (uint32_t i = 0; i < width; i++) {
       color pixel_color(0, 0, 0);
       for (int s = 0; s < camera::SAMPLES_PER_PIXEL; s++) {
-        const float x_offset =
-            std::uniform_real_distribution<float>(-0.5f, 0.5f)(rng);
-        const float y_offset =
-            std::uniform_real_distribution<float>(-0.5f, 0.5f)(rng);
+        const float x_offset = jitter(rng);
+        const float y_offset = jitter(rng);
 
-        auto sample_point =
-            pixel_center + x_offset * pixel_delta_u + y_offset * pixel_delta_v;
+        const auto sample_point = pixel_center +
+                                  x_offset * data.pixel_delta_u +
+                                  y_offset * data.pixel_delta_v;
 
-        ray r(center, sample_point - center);
+        const ray r(data.center, sample_point - data.center);
 
         pixel_color += ray_color(r, world, camera::MAX_DEPTH);
       }
       pixel_color /= static_cast<float>(camera::SAMPLES_PER_PIXEL);
       *row++ = convert(pixel_color);
 
-      pixel_center += pixel_delta_u;
+      pixel_center += data.pixel_delta_u;
     }
   }
-}
-
-color Camera::ray_color(const ray &r, const World &world, int depth) const {
-  if (depth <= 0)
-    return color(0, 0, 0);
-
-  HitRecord rec;
-
-  // If the ray hits nothing, return the background color.
-  if (!world.hit(r, math::K_EPSILON, INFINITY, rec)) {
-    vec3 unit_direction = glm::normalize(r.direction());
-    float a = 0.5f * (unit_direction.y + 1.0f);
-    return (1.0f - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
-  }
-
-  ray scattered;
-  color attenuation;
-  color color_from_emission;
-  rec.hit_object->emitted(color_from_emission);
-
-  if (!rec.hit_object->scatter(r, rec, attenuation, scattered))
-    return color_from_emission;
-
-  color color_from_scatter =
-      attenuation * ray_color(scattered, world, depth - 1);
-
-  return color_from_emission + color_from_scatter;
 }

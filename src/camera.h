@@ -10,6 +10,7 @@
 #include <random>
 
 struct CameraData {
+  vec3 center;
   vec3 forward;
   vec3 right;
   vec3 up;
@@ -22,9 +23,9 @@ struct CameraData {
   glm::quat orientation;
 };
 
-void testCudaKernel();
 void renderWorld(const CameraData &data, const World &world,
-                 std::array<uint32_t, window::SIZE> &pixels);
+                 std::array<uint32_t, window::SIZE> &pixels,
+                 std::mt19937 &rng);
 
 class Camera {
 public:
@@ -41,7 +42,6 @@ public:
               std::array<uint32_t, window::SIZE> &pixels) const;
 
 private:
-  color ray_color(const ray &r, const World &world, int depth) const;
   uint32_t width;
   uint32_t height;
   vec3 center;

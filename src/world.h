@@ -1,7 +1,9 @@
 #pragma once
 
 #include "cube.h"
+#include "bvh.h"
 #include <fstream>
+#include <optional>
 #include <vector>
 
 enum class SceneMaterial { LAMBERTIAN, METAL, DIELECTRIC, EMISSIVE, RANDOM };
@@ -17,6 +19,11 @@ struct SceneConfig {
   glm::vec2 fuzz_range{0.0f, 0.0f};
   glm::vec2 refraction_range{1.5f, 1.5f};
   glm::vec2 brightness_range{1.0f, 1.0f};
+
+  // Generate exactly this many cubes in randomly chosen grid slots.
+  // When set, every placed cube is a real material (the sparse gap pool
+  // is skipped) and --density has no effect.
+  std::optional<unsigned int> count;
 };
 
 class World {
@@ -30,10 +37,12 @@ public:
 
   uint add(Cube &&to_add) {
     world.push_back(to_add);
+    bvh_dirty = true;
     return id++;
   }
 
   void remove(uint objectId) {
+    bvh_dirty = true;
     if (objectId < world.size()) {
       world[objectId] = Cube(VoxelData{MaterialType::NONE, color(0, 0, 0), 0, 1.5f,
                                        1.0f, vec3{0, 0, 0}});
@@ -47,17 +56,24 @@ public:
   }
 
   bool hit(const ray &r, float ray_min, float ray_max, HitRecord &rec) const;
+  bool hit_linear(const ray &r, float ray_min, float ray_max,
+                  HitRecord &rec) const;
+  void buildBvh();
 
   auto begin() const { return world.begin(); }
   auto end() const { return world.end(); }
 
-  auto begin() { return world.begin(); }
-  auto end() { return world.end(); }
+  auto begin() { bvh_dirty = true; mutable_iterators_exposed = true; return world.begin(); }
+  auto end() { bvh_dirty = true; mutable_iterators_exposed = true; return world.end(); }
 
 private:
   bool loadFromFile(const std::string &string);
 
   std::vector<Cube> world;
+  Bvh bvh;
+  bool bvh_dirty = true;
+  bool mutable_iterators_exposed = false;
+  std::vector<glm::mat4> bvh_transforms;
 
   uint id = 0;
 };

@@ -46,6 +46,12 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 $(BIN_DIR):
 	mkdir -p $@
 
+$(BIN_DIR)/bvh_test: tests/bvh_test.cpp $(OBJ_DIR)/world.o $(OBJ_DIR)/cube.o $(OBJ_DIR)/bvh.o | $(BIN_DIR)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@ $(LDLIBS)
+
+test: $(BIN_DIR)/bvh_test
+	./$(BIN_DIR)/bvh_test
+
 run: $(TARGET)
 	./$(TARGET)
 
@@ -64,4 +70,4 @@ git:
 
 -include $(DEPS)
 
-.PHONY: all run benchmark clean git
+.PHONY: all run benchmark clean git test

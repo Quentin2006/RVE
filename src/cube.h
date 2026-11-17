@@ -74,6 +74,7 @@ public:
 
   const VoxelData &getVoxelData() const { return data; }
   VoxelData &getVoxelData() { return data; }
+  const glm::mat4 &modelMatrixRef() const { return modelMatrix; }
 
 private:
   float sanitizeScaleComponent(float value) {

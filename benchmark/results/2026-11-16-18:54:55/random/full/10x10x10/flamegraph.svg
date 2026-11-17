@@ -1,0 +1,950 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" width="1200" height="678" onload="init(evt)" viewBox="0 0 1200 678" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!-- Flame graph stack visualization. See https://github.com/brendangregg/FlameGraph for latest version, and http://www.brendangregg.com/flamegraphs.html for examples. -->
+<!-- NOTES:  -->
+<defs>
+	<linearGradient id="background" y1="0" y2="1" x1="0" x2="0" >
+		<stop stop-color="#eeeeee" offset="5%" />
+		<stop stop-color="#eeeeb0" offset="95%" />
+	</linearGradient>
+</defs>
+<style type="text/css">
+	text { font-family:Verdana; font-size:12px; fill:rgb(0,0,0); }
+	#search, #ignorecase { opacity:0.1; cursor:pointer; }
+	#search:hover, #search.show, #ignorecase:hover, #ignorecase.show { opacity:1; }
+	#subtitle { text-anchor:middle; font-color:rgb(160,160,160); }
+	#title { text-anchor:middle; font-size:17px}
+	#unzoom { cursor:pointer; }
+	#frames > *:hover { stroke:black; stroke-width:0.5; cursor:pointer; }
+	.hide { display:none; }
+	.parent { opacity:0.5; }
+</style>
+<script type="text/ecmascript">
+<![CDATA[
+	"use strict";
+	var details, searchbtn, unzoombtn, matchedtxt, svg, searching, currentSearchTerm, ignorecase, ignorecaseBtn;
+	function init(evt) {
+		details = document.getElementById("details").firstChild;
+		searchbtn = document.getElementById("search");
+		ignorecaseBtn = document.getElementById("ignorecase");
+		unzoombtn = document.getElementById("unzoom");
+		matchedtxt = document.getElementById("matched");
+		svg = document.getElementsByTagName("svg")[0];
+		searching = 0;
+		currentSearchTerm = null;
+
+		// use GET parameters to restore a flamegraphs state.
+		var params = get_params();
+		if (params.x && params.y)
+			zoom(find_group(document.querySelector('[x="' + params.x + '"][y="' + params.y + '"]')));
+                if (params.s) search(params.s);
+	}
+
+	// event listeners
+	window.addEventListener("click", function(e) {
+		var target = find_group(e.target);
+		if (target) {
+			if (target.nodeName == "a") {
+				if (e.ctrlKey === false) return;
+				e.preventDefault();
+			}
+			if (target.classList.contains("parent")) unzoom(true);
+			zoom(target);
+			if (!document.querySelector('.parent')) {
+				// we have basically done a clearzoom so clear the url
+				var params = get_params();
+				if (params.x) delete params.x;
+				if (params.y) delete params.y;
+				history.replaceState(null, null, parse_params(params));
+				unzoombtn.classList.add("hide");
+				return;
+			}
+
+			// set parameters for zoom state
+			var el = target.querySelector("rect");
+			if (el && el.attributes && el.attributes.y && el.attributes._orig_x) {
+				var params = get_params()
+				params.x = el.attributes._orig_x.value;
+				params.y = el.attributes.y.value;
+				history.replaceState(null, null, parse_params(params));
+			}
+		}
+		else if (e.target.id == "unzoom") clearzoom();
+		else if (e.target.id == "search") search_prompt();
+		else if (e.target.id == "ignorecase") toggle_ignorecase();
+	}, false)
+
+	// mouse-over for info
+	// show
+	window.addEventListener("mouseover", function(e) {
+		var target = find_group(e.target);
+		if (target) details.nodeValue = "Function: " + g_to_text(target);
+	}, false)
+
+	// clear
+	window.addEventListener("mouseout", function(e) {
+		var target = find_group(e.target);
+		if (target) details.nodeValue = ' ';
+	}, false)
+
+	// ctrl-F for search
+	// ctrl-I to toggle case-sensitive search
+	window.addEventListener("keydown",function (e) {
+		if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70)) {
+			e.preventDefault();
+			search_prompt();
+		}
+		else if (e.ctrlKey && e.keyCode === 73) {
+			e.preventDefault();
+			toggle_ignorecase();
+		}
+	}, false)
+
+	// functions
+	function get_params() {
+		var params = {};
+		var paramsarr = window.location.search.substr(1).split('&');
+		for (var i = 0; i < paramsarr.length; ++i) {
+			var tmp = paramsarr[i].split("=");
+			if (!tmp[0] || !tmp[1]) continue;
+			params[tmp[0]]  = decodeURIComponent(tmp[1]);
+		}
+		return params;
+	}
+	function parse_params(params) {
+		var uri = "?";
+		for (var key in params) {
+			uri += key + '=' + encodeURIComponent(params[key]) + '&';
+		}
+		if (uri.slice(-1) == "&")
+			uri = uri.substring(0, uri.length - 1);
+		if (uri == '?')
+			uri = window.location.href.split('?')[0];
+		return uri;
+	}
+	function find_child(node, selector) {
+		var children = node.querySelectorAll(selector);
+		if (children.length) return children[0];
+	}
+	function find_group(node) {
+		var parent = node.parentElement;
+		if (!parent) return;
+		if (parent.id == "frames") return node;
+		return find_group(parent);
+	}
+	function orig_save(e, attr, val) {
+		if (e.attributes["_orig_" + attr] != undefined) return;
+		if (e.attributes[attr] == undefined) return;
+		if (val == undefined) val = e.attributes[attr].value;
+		e.setAttribute("_orig_" + attr, val);
+	}
+	function orig_load(e, attr) {
+		if (e.attributes["_orig_"+attr] == undefined) return;
+		e.attributes[attr].value = e.attributes["_orig_" + attr].value;
+		e.removeAttribute("_orig_"+attr);
+	}
+	function g_to_text(e) {
+		var text = find_child(e, "title").firstChild.nodeValue;
+		return (text)
+	}
+	function g_to_func(e) {
+		var func = g_to_text(e);
+		// if there's any manipulation we want to do to the function
+		// name before it's searched, do it here before returning.
+		return (func);
+	}
+	function update_text(e) {
+		var r = find_child(e, "rect");
+		var t = find_child(e, "text");
+		var w = parseFloat(r.attributes.width.value) -3;
+		var txt = find_child(e, "title").textContent.replace(/\([^(]*\)$/,"");
+		t.attributes.x.value = parseFloat(r.attributes.x.value) + 3;
+
+		// Smaller than this size won't fit anything
+		if (w < 2 * 12 * 0.59) {
+			t.textContent = "";
+			return;
+		}
+
+		t.textContent = txt;
+		var sl = t.getSubStringLength(0, txt.length);
+		// check if only whitespace or if we can fit the entire string into width w
+		if (/^ *$/.test(txt) || sl < w)
+			return;
+
+		// this isn't perfect, but gives a good starting point
+		// and avoids calling getSubStringLength too often
+		var start = Math.floor((w/sl) * txt.length);
+		for (var x = start; x > 0; x = x-2) {
+			if (t.getSubStringLength(0, x + 2) <= w) {
+				t.textContent = txt.substring(0, x) + "..";
+				return;
+			}
+		}
+		t.textContent = "";
+	}
+
+	// zoom
+	function zoom_reset(e) {
+		if (e.attributes != undefined) {
+			orig_load(e, "x");
+			orig_load(e, "width");
+		}
+		if (e.childNodes == undefined) return;
+		for (var i = 0, c = e.childNodes; i < c.length; i++) {
+			zoom_reset(c[i]);
+		}
+	}
+	function zoom_child(e, x, ratio) {
+		if (e.attributes != undefined) {
+			if (e.attributes.x != undefined) {
+				orig_save(e, "x");
+				e.attributes.x.value = (parseFloat(e.attributes.x.value) - x - 10) * ratio + 10;
+				if (e.tagName == "text")
+					e.attributes.x.value = find_child(e.parentNode, "rect[x]").attributes.x.value + 3;
+			}
+			if (e.attributes.width != undefined) {
+				orig_save(e, "width");
+				e.attributes.width.value = parseFloat(e.attributes.width.value) * ratio;
+			}
+		}
+
+		if (e.childNodes == undefined) return;
+		for (var i = 0, c = e.childNodes; i < c.length; i++) {
+			zoom_child(c[i], x - 10, ratio);
+		}
+	}
+	function zoom_parent(e) {
+		if (e.attributes) {
+			if (e.attributes.x != undefined) {
+				orig_save(e, "x");
+				e.attributes.x.value = 10;
+			}
+			if (e.attributes.width != undefined) {
+				orig_save(e, "width");
+				e.attributes.width.value = parseInt(svg.width.baseVal.value) - (10 * 2);
+			}
+		}
+		if (e.childNodes == undefined) return;
+		for (var i = 0, c = e.childNodes; i < c.length; i++) {
+			zoom_parent(c[i]);
+		}
+	}
+	function zoom(node) {
+		var attr = find_child(node, "rect").attributes;
+		var width = parseFloat(attr.width.value);
+		var xmin = parseFloat(attr.x.value);
+		var xmax = parseFloat(xmin + width);
+		var ymin = parseFloat(attr.y.value);
+		var ratio = (svg.width.baseVal.value - 2 * 10) / width;
+
+		// XXX: Workaround for JavaScript float issues (fix me)
+		var fudge = 0.0001;
+
+		unzoombtn.classList.remove("hide");
+
+		var el = document.getElementById("frames").children;
+		for (var i = 0; i < el.length; i++) {
+			var e = el[i];
+			var a = find_child(e, "rect").attributes;
+			var ex = parseFloat(a.x.value);
+			var ew = parseFloat(a.width.value);
+			var upstack;
+			// Is it an ancestor
+			if (0 == 0) {
+				upstack = parseFloat(a.y.value) > ymin;
+			} else {
+				upstack = parseFloat(a.y.value) < ymin;
+			}
+			if (upstack) {
+				// Direct ancestor
+				if (ex <= xmin && (ex+ew+fudge) >= xmax) {
+					e.classList.add("parent");
+					zoom_parent(e);
+					update_text(e);
+				}
+				// not in current path
+				else
+					e.classList.add("hide");
+			}
+			// Children maybe
+			else {
+				// no common path
+				if (ex < xmin || ex + fudge >= xmax) {
+					e.classList.add("hide");
+				}
+				else {
+					zoom_child(e, xmin, ratio);
+					update_text(e);
+				}
+			}
+		}
+		search();
+	}
+	function unzoom(dont_update_text) {
+		unzoombtn.classList.add("hide");
+		var el = document.getElementById("frames").children;
+		for(var i = 0; i < el.length; i++) {
+			el[i].classList.remove("parent");
+			el[i].classList.remove("hide");
+			zoom_reset(el[i]);
+			if(!dont_update_text) update_text(el[i]);
+		}
+		search();
+	}
+	function clearzoom() {
+		unzoom();
+
+		// remove zoom state
+		var params = get_params();
+		if (params.x) delete params.x;
+		if (params.y) delete params.y;
+		history.replaceState(null, null, parse_params(params));
+	}
+
+	// search
+	function toggle_ignorecase() {
+		ignorecase = !ignorecase;
+		if (ignorecase) {
+			ignorecaseBtn.classList.add("show");
+		} else {
+			ignorecaseBtn.classList.remove("show");
+		}
+		reset_search();
+		search();
+	}
+	function reset_search() {
+		var el = document.querySelectorAll("#frames rect");
+		for (var i = 0; i < el.length; i++) {
+			orig_load(el[i], "fill")
+		}
+		var params = get_params();
+		delete params.s;
+		history.replaceState(null, null, parse_params(params));
+	}
+	function search_prompt() {
+		if (!searching) {
+			var term = prompt("Enter a search term (regexp " +
+			    "allowed, eg: ^ext4_)"
+			    + (ignorecase ? ", ignoring case" : "")
+			    + "\nPress Ctrl-i to toggle case sensitivity", "");
+			if (term != null) search(term);
+		} else {
+			reset_search();
+			searching = 0;
+			currentSearchTerm = null;
+			searchbtn.classList.remove("show");
+			searchbtn.firstChild.nodeValue = "Search"
+			matchedtxt.classList.add("hide");
+			matchedtxt.firstChild.nodeValue = ""
+		}
+	}
+	function search(term) {
+		if (term) currentSearchTerm = term;
+		if (currentSearchTerm === null) return;
+
+		var re = new RegExp(currentSearchTerm, ignorecase ? 'i' : '');
+		var el = document.getElementById("frames").children;
+		var matches = new Object();
+		var maxwidth = 0;
+		for (var i = 0; i < el.length; i++) {
+			var e = el[i];
+			var func = g_to_func(e);
+			var rect = find_child(e, "rect");
+			if (func == null || rect == null)
+				continue;
+
+			// Save max width. Only works as we have a root frame
+			var w = parseFloat(rect.attributes.width.value);
+			if (w > maxwidth)
+				maxwidth = w;
+
+			if (func.match(re)) {
+				// highlight
+				var x = parseFloat(rect.attributes.x.value);
+				orig_save(rect, "fill");
+				rect.attributes.fill.value = "rgb(230,0,230)";
+
+				// remember matches
+				if (matches[x] == undefined) {
+					matches[x] = w;
+				} else {
+					if (w > matches[x]) {
+						// overwrite with parent
+						matches[x] = w;
+					}
+				}
+				searching = 1;
+			}
+		}
+		if (!searching)
+			return;
+		var params = get_params();
+		params.s = currentSearchTerm;
+		history.replaceState(null, null, parse_params(params));
+
+		searchbtn.classList.add("show");
+		searchbtn.firstChild.nodeValue = "Reset Search";
+
+		// calculate percent matched, excluding vertical overlap
+		var count = 0;
+		var lastx = -1;
+		var lastw = 0;
+		var keys = Array();
+		for (k in matches) {
+			if (matches.hasOwnProperty(k))
+				keys.push(k);
+		}
+		// sort the matched frames by their x location
+		// ascending, then width descending
+		keys.sort(function(a, b){
+			return a - b;
+		});
+		// Step through frames saving only the biggest bottom-up frames
+		// thanks to the sort order. This relies on the tree property
+		// where children are always smaller than their parents.
+		var fudge = 0.0001;	// JavaScript floating point
+		for (var k in keys) {
+			var x = parseFloat(keys[k]);
+			var w = matches[keys[k]];
+			if (x >= lastx + lastw - fudge) {
+				count += w;
+				lastx = x;
+				lastw = w;
+			}
+		}
+		// display matched percent
+		matchedtxt.classList.remove("hide");
+		var pct = 100 * count / maxwidth;
+		if (pct != 100) pct = pct.toFixed(1)
+		matchedtxt.firstChild.nodeValue = "Matched: " + pct + "%";
+	}
+]]>
+</script>
+<rect x="0.0" y="0" width="1200.0" height="678.0" fill="url(#background)"  />
+<text id="title" x="600.00" y="24" >Flame Graph</text>
+<text id="details" x="10.00" y="661" > </text>
+<text id="unzoom" x="10.00" y="24" class="hide">Reset Zoom</text>
+<text id="search" x="1090.00" y="24" >Search</text>
+<text id="ignorecase" x="1174.00" y="24" >ic</text>
+<text id="matched" x="1090.00" y="661" > </text>
+<g id="frames">
+<g >
+<title>[libffi.so.8.5.0] (40,032,862 samples, 0.19%)</title><rect x="16.8" y="581" width="2.1" height="15.0" fill="rgb(207,9,2)" rx="2" ry="2" />
+<text  x="19.76" y="591.5" ></text>
+</g>
+<g >
+<title>std::plus&lt;float&gt;::operator (481,640,549 samples, 2.23%)</title><rect x="1149.8" y="373" width="26.4" height="15.0" fill="rgb(210,23,5)" rx="2" ry="2" />
+<text  x="1152.79" y="383.5" >s..</text>
+</g>
+<g >
+<title>nextafterf@plt (321,404,866 samples, 1.49%)</title><rect x="540.0" y="405" width="17.6" height="15.0" fill="rgb(209,20,4)" rx="2" ry="2" />
+<text  x="543.00" y="415.5" ></text>
+</g>
+<g >
+<title>glm::vec&lt;3, float,  (561,961,474 samples, 2.61%)</title><rect x="1145.4" y="437" width="30.8" height="15.0" fill="rgb(244,180,43)" rx="2" ry="2" />
+<text  x="1148.39" y="447.5" >gl..</text>
+</g>
+<g >
+<title>[libEGL.so.1.1.0] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="277" width="1.2" height="15.0" fill="rgb(228,109,26)" rx="2" ry="2" />
+<text  x="24.94" y="287.5" ></text>
+</g>
+<g >
+<title>Cube* std::__relocate_a&lt;Cube*, Cube*, std::allocator&lt;Cube&gt; &gt; (4,361,321 samples, 0.02%)</title><rect x="1189.8" y="453" width="0.2" height="15.0" fill="rgb(209,19,4)" rx="2" ry="2" />
+<text  x="1192.76" y="463.5" ></text>
+</g>
+<g >
+<title>std::vector&lt;Bvh::Node, std::allocator&lt;Bvh::Node&gt; &gt;::operator[] (200,390,899 samples, 0.93%)</title><rect x="559.8" y="405" width="11.0" height="15.0" fill="rgb(244,181,43)" rx="2" ry="2" />
+<text  x="562.78" y="415.5" ></text>
+</g>
+<g >
+<title>Bvh::intersect (9,909,087,339 samples, 45.96%)</title><rect x="575.1" y="421" width="542.4" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="578.14" y="431.5" >Bvh::intersect</text>
+</g>
+<g >
+<title>dbus_type_is_basic (5,050,505 samples, 0.02%)</title><rect x="23.1" y="405" width="0.3" height="15.0" fill="rgb(246,189,45)" rx="2" ry="2" />
+<text  x="26.10" y="415.5" ></text>
+</g>
+<g >
+<title>void std::allocator_traits&lt;std::allocator&lt;Cube&gt; &gt;::construct&lt;Cube, Cube&gt; (4,361,321 samples, 0.02%)</title><rect x="1189.8" y="405" width="0.2" height="15.0" fill="rgb(241,167,39)" rx="2" ry="2" />
+<text  x="1192.76" y="415.5" ></text>
+</g>
+<g >
+<title>_dl_catch_exception (21,191,472 samples, 0.10%)</title><rect x="21.9" y="197" width="1.2" height="15.0" fill="rgb(253,223,53)" rx="2" ry="2" />
+<text  x="24.94" y="207.5" ></text>
+</g>
+<g >
+<title>float std::uniform_real_distribution&lt;float&gt;::operator (80,279,819 samples, 0.37%)</title><rect x="47.5" y="437" width="4.4" height="15.0" fill="rgb(246,191,45)" rx="2" ry="2" />
+<text  x="50.53" y="447.5" ></text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="405" width="1.2" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="24.94" y="415.5" ></text>
+</g>
+<g >
+<title>[ld-linux-x86-64.so.2] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="165" width="1.2" height="15.0" fill="rgb(243,178,42)" rx="2" ry="2" />
+<text  x="24.94" y="175.5" ></text>
+</g>
+<g >
+<title>[unknown] (94,798,209 samples, 0.44%)</title><rect x="16.8" y="597" width="5.1" height="15.0" fill="rgb(210,24,5)" rx="2" ry="2" />
+<text  x="19.76" y="607.5" ></text>
+</g>
+<g >
+<title>[ld-linux-x86-64.so.2] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="85" width="1.2" height="15.0" fill="rgb(243,178,42)" rx="2" ry="2" />
+<text  x="24.94" y="95.5" ></text>
+</g>
+<g >
+<title>[libLLVM.so.23.1] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="37" width="1.2" height="15.0" fill="rgb(210,26,6)" rx="2" ry="2" />
+<text  x="24.94" y="47.5" ></text>
+</g>
+<g >
+<title>[libEGL.so.1.1.0] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="293" width="1.2" height="15.0" fill="rgb(228,109,26)" rx="2" ry="2" />
+<text  x="24.94" y="303.5" ></text>
+</g>
+<g >
+<title>glm::vec&lt;3, float,  (481,640,549 samples, 2.23%)</title><rect x="1149.8" y="389" width="26.4" height="15.0" fill="rgb(244,180,43)" rx="2" ry="2" />
+<text  x="1152.79" y="399.5" >g..</text>
+</g>
+<g >
+<title>App::App (26,241,977 samples, 0.12%)</title><rect x="21.9" y="517" width="1.5" height="15.0" fill="rgb(230,116,27)" rx="2" ry="2" />
+<text  x="24.94" y="527.5" ></text>
+</g>
+<g >
+<title>std::abs (80,378,500 samples, 0.37%)</title><rect x="347.5" y="389" width="4.4" height="15.0" fill="rgb(223,84,20)" rx="2" ry="2" />
+<text  x="350.48" y="399.5" ></text>
+</g>
+<g >
+<title>[libLLVM.so.23.1] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="69" width="1.2" height="15.0" fill="rgb(210,26,6)" rx="2" ry="2" />
+<text  x="24.94" y="79.5" ></text>
+</g>
+<g >
+<title>glm::detail::compute_vec_add&lt;3, float,  (481,640,549 samples, 2.23%)</title><rect x="1149.8" y="405" width="26.4" height="15.0" fill="rgb(206,8,1)" rx="2" ry="2" />
+<text  x="1152.79" y="415.5" >g..</text>
+</g>
+<g >
+<title>glm::detail::compute_vec_add&lt;3, float,  (338,224,204 samples, 1.57%)</title><rect x="51.9" y="437" width="18.5" height="15.0" fill="rgb(206,8,1)" rx="2" ry="2" />
+<text  x="54.92" y="447.5" ></text>
+</g>
+<g >
+<title>Camera::render (21,311,495,772 samples, 98.85%)</title><rect x="23.4" y="485" width="1166.4" height="15.0" fill="rgb(250,210,50)" rx="2" ry="2" />
+<text  x="26.38" y="495.5" >Camera::render</text>
+</g>
+<g >
+<title>call_init (21,342,099,070 samples, 98.99%)</title><rect x="21.9" y="565" width="1168.1" height="15.0" fill="rgb(221,77,18)" rx="2" ry="2" />
+<text  x="24.94" y="575.5" >call_init</text>
+</g>
+<g >
+<title>Cube::hit (120,497,441 samples, 0.56%)</title><rect x="1138.8" y="421" width="6.6" height="15.0" fill="rgb(240,163,39)" rx="2" ry="2" />
+<text  x="1141.80" y="431.5" ></text>
+</g>
+<g >
+<title>App::~App (21,311,495,772 samples, 98.85%)</title><rect x="23.4" y="517" width="1166.4" height="15.0" fill="rgb(216,52,12)" rx="2" ry="2" />
+<text  x="26.38" y="527.5" >App::~App</text>
+</g>
+<g >
+<title>[unknown] (14,503,057 samples, 0.07%)</title><rect x="21.2" y="581" width="0.7" height="15.0" fill="rgb(210,24,5)" rx="2" ry="2" />
+<text  x="24.15" y="591.5" ></text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="437" width="1.2" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="24.94" y="447.5" ></text>
+</g>
+<g >
+<title>Bvh::hit (8,257,878,362 samples, 38.30%)</title><rect x="123.2" y="421" width="451.9" height="15.0" fill="rgb(254,226,54)" rx="2" ry="2" />
+<text  x="126.18" y="431.5" >Bvh::hit</text>
+</g>
+<g >
+<title>Window::Window (21,191,472 samples, 0.10%)</title><rect x="21.9" y="485" width="1.2" height="15.0" fill="rgb(248,201,48)" rx="2" ry="2" />
+<text  x="24.94" y="495.5" ></text>
+</g>
+<g >
+<title>[libc.so.6] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="309" width="1.2" height="15.0" fill="rgb(223,84,20)" rx="2" ry="2" />
+<text  x="24.94" y="319.5" ></text>
+</g>
+<g >
+<title>[libnvidia-gpucomp.so.615.78.08] (5,050,505 samples, 0.02%)</title><rect x="20.9" y="581" width="0.3" height="15.0" fill="rgb(249,202,48)" rx="2" ry="2" />
+<text  x="23.87" y="591.5" ></text>
+</g>
+<g >
+<title>glm::vec&lt;4, float,  (279,220,073 samples, 1.30%)</title><rect x="358.5" y="309" width="15.3" height="15.0" fill="rgb(237,150,36)" rx="2" ry="2" />
+<text  x="361.47" y="319.5" ></text>
+</g>
+<g >
+<title>[libnvidia-eglcore.so.615.78.08] (27,004,640 samples, 0.13%)</title><rect x="18.9" y="565" width="1.5" height="15.0" fill="rgb(217,55,13)" rx="2" ry="2" />
+<text  x="21.95" y="575.5" ></text>
+</g>
+<g >
+<title>[libnvidia-eglcore.so.615.78.08] (27,004,640 samples, 0.13%)</title><rect x="18.9" y="581" width="1.5" height="15.0" fill="rgb(217,55,13)" rx="2" ry="2" />
+<text  x="21.95" y="591.5" ></text>
+</g>
+<g >
+<title>std::multiplies&lt;float&gt;::operator (80,140,500 samples, 0.37%)</title><rect x="373.8" y="293" width="4.3" height="15.0" fill="rgb(250,207,49)" rx="2" ry="2" />
+<text  x="376.76" y="303.5" ></text>
+</g>
+<g >
+<title>glm::vec&lt;3, float,  (481,640,549 samples, 2.23%)</title><rect x="1149.8" y="421" width="26.4" height="15.0" fill="rgb(244,180,43)" rx="2" ry="2" />
+<text  x="1152.79" y="431.5" >g..</text>
+</g>
+<g >
+<title>App::run (21,311,495,772 samples, 98.85%)</title><rect x="23.4" y="501" width="1166.4" height="15.0" fill="rgb(244,181,43)" rx="2" ry="2" />
+<text  x="26.38" y="511.5" >App::run</text>
+</g>
+<g >
+<title>[libc.so.6] (2,685,735 samples, 0.01%)</title><rect x="10.0" y="581" width="0.1" height="15.0" fill="rgb(223,84,20)" rx="2" ry="2" />
+<text  x="13.00" y="591.5" ></text>
+</g>
+<g >
+<title>convert (401,002,613 samples, 1.86%)</title><rect x="25.6" y="453" width="21.9" height="15.0" fill="rgb(245,188,44)" rx="2" ry="2" />
+<text  x="28.58" y="463.5" >c..</text>
+</g>
+<g >
+<title>llvm::cl::Option::addArgument (21,191,472 samples, 0.10%)</title><rect x="21.9" y="53" width="1.2" height="15.0" fill="rgb(214,45,10)" rx="2" ry="2" />
+<text  x="24.94" y="63.5" ></text>
+</g>
+<g >
+<title>glm::mat&lt;4, 4, float,  (479,834,088 samples, 2.23%)</title><rect x="351.9" y="373" width="26.2" height="15.0" fill="rgb(235,138,33)" rx="2" ry="2" />
+<text  x="354.88" y="383.5" >g..</text>
+</g>
+<g >
+<title>void std::vector&lt;Cube, std::allocator&lt;Cube&gt; &gt;::_M_realloc_append&lt;Cube const&amp;&gt; (4,361,321 samples, 0.02%)</title><rect x="1189.8" y="469" width="0.2" height="15.0" fill="rgb(229,111,26)" rx="2" ry="2" />
+<text  x="1192.76" y="479.5" ></text>
+</g>
+<g >
+<title>[libc.so.6] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="229" width="1.2" height="15.0" fill="rgb(223,84,20)" rx="2" ry="2" />
+<text  x="24.94" y="239.5" ></text>
+</g>
+<g >
+<title>Cube* std::__relocate_a_1&lt;Cube*, Cube*, std::allocator&lt;Cube&gt; &gt; (4,361,321 samples, 0.02%)</title><rect x="1189.8" y="437" width="0.2" height="15.0" fill="rgb(228,110,26)" rx="2" ry="2" />
+<text  x="1192.76" y="447.5" ></text>
+</g>
+<g >
+<title>Bvh::requiresLinear (120,003,979 samples, 0.56%)</title><rect x="96.8" y="437" width="6.6" height="15.0" fill="rgb(223,86,20)" rx="2" ry="2" />
+<text  x="99.85" y="447.5" ></text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (5,050,505 samples, 0.02%)</title><rect x="23.1" y="437" width="0.3" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="26.10" y="447.5" ></text>
+</g>
+<g >
+<title>std::mersenne_twister_engine&lt;unsigned long, 32ul, 624ul, 397ul, 31ul, 2567483615ul, 11ul, 4294967295ul, 7ul, 2636928640ul, 15ul, 4022730752ul, 18ul, 1812433253ul&gt;::_M_gen_rand (240,533,267 samples, 1.12%)</title><rect x="1176.6" y="469" width="13.2" height="15.0" fill="rgb(207,12,3)" rx="2" ry="2" />
+<text  x="1179.60" y="479.5" ></text>
+</g>
+<g >
+<title>[libc.so.6] (2,685,735 samples, 0.01%)</title><rect x="10.0" y="565" width="0.1" height="15.0" fill="rgb(223,84,20)" rx="2" ry="2" />
+<text  x="13.00" y="575.5" ></text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="373" width="1.2" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="24.94" y="383.5" ></text>
+</g>
+<g >
+<title>all (21,560,347,757 samples, 100%)</title><rect x="10.0" y="629" width="1180.0" height="15.0" fill="rgb(213,39,9)" rx="2" ry="2" />
+<text  x="13.00" y="639.5" ></text>
+</g>
+<g >
+<title>World::hit (18,998,275,224 samples, 88.12%)</title><rect x="105.6" y="437" width="1039.8" height="15.0" fill="rgb(205,2,0)" rx="2" ry="2" />
+<text  x="108.62" y="447.5" >World::hit</text>
+</g>
+<g >
+<title>Window::Window (26,241,977 samples, 0.12%)</title><rect x="21.9" y="501" width="1.5" height="15.0" fill="rgb(248,201,48)" rx="2" ry="2" />
+<text  x="24.94" y="511.5" ></text>
+</g>
+<g >
+<title>std::nextafter (40,183,555 samples, 0.19%)</title><rect x="227.7" y="389" width="2.2" height="15.0" fill="rgb(214,44,10)" rx="2" ry="2" />
+<text  x="230.71" y="399.5" ></text>
+</g>
+<g >
+<title>float std::uniform_real_distribution&lt;float&gt;::operator (80,279,819 samples, 0.37%)</title><rect x="47.5" y="453" width="4.4" height="15.0" fill="rgb(246,191,45)" rx="2" ry="2" />
+<text  x="50.53" y="463.5" ></text>
+</g>
+<g >
+<title>[libEGL_nvidia.so.615.78.08] (14,503,057 samples, 0.07%)</title><rect x="21.2" y="565" width="0.7" height="15.0" fill="rgb(209,21,5)" rx="2" ry="2" />
+<text  x="24.15" y="575.5" ></text>
+</g>
+<g >
+<title>transformRay (560,128,961 samples, 2.60%)</title><rect x="351.9" y="389" width="30.6" height="15.0" fill="rgb(243,175,42)" rx="2" ry="2" />
+<text  x="354.88" y="399.5" >tr..</text>
+</g>
+<g >
+<title>[ld-linux-x86-64.so.2] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="213" width="1.2" height="15.0" fill="rgb(243,178,42)" rx="2" ry="2" />
+<text  x="24.94" y="223.5" ></text>
+</g>
+<g >
+<title>nextafterf32 (2,756,594,084 samples, 12.79%)</title><rect x="389.1" y="405" width="150.9" height="15.0" fill="rgb(240,165,39)" rx="2" ry="2" />
+<text  x="392.13" y="415.5" >nextafterf32</text>
+</g>
+<g >
+<title>[libSDL2-2.0.so.0.3200.74] (5,050,505 samples, 0.02%)</title><rect x="23.1" y="485" width="0.3" height="15.0" fill="rgb(233,129,30)" rx="2" ry="2" />
+<text  x="26.10" y="495.5" ></text>
+</g>
+<g >
+<title>glm::vec&lt;4, float,  (80,140,500 samples, 0.37%)</title><rect x="373.8" y="309" width="4.3" height="15.0" fill="rgb(237,150,36)" rx="2" ry="2" />
+<text  x="376.76" y="319.5" ></text>
+</g>
+<g >
+<title>[libnvidia-glcore.so.615.78.08] (8,207,145 samples, 0.04%)</title><rect x="20.4" y="581" width="0.5" height="15.0" fill="rgb(219,66,15)" rx="2" ry="2" />
+<text  x="23.43" y="591.5" ></text>
+</g>
+<g >
+<title>World::generate (4,361,321 samples, 0.02%)</title><rect x="1189.8" y="517" width="0.2" height="15.0" fill="rgb(209,20,4)" rx="2" ry="2" />
+<text  x="1192.76" y="527.5" ></text>
+</g>
+<g >
+<title>[ld-linux-x86-64.so.2] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="101" width="1.2" height="15.0" fill="rgb(243,178,42)" rx="2" ry="2" />
+<text  x="24.94" y="111.5" ></text>
+</g>
+<g >
+<title>glm::detail::compute_vec_mul&lt;4, float,  (80,140,500 samples, 0.37%)</title><rect x="373.8" y="325" width="4.3" height="15.0" fill="rgb(211,29,6)" rx="2" ry="2" />
+<text  x="376.76" y="335.5" ></text>
+</g>
+<g >
+<title>clock_gettime (27,004,640 samples, 0.13%)</title><rect x="18.9" y="549" width="1.5" height="15.0" fill="rgb(213,39,9)" rx="2" ry="2" />
+<text  x="21.95" y="559.5" ></text>
+</g>
+<g >
+<title>main (21,342,099,070 samples, 98.99%)</title><rect x="21.9" y="533" width="1168.1" height="15.0" fill="rgb(243,179,42)" rx="2" ry="2" />
+<text  x="24.94" y="543.5" >main</text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="357" width="1.2" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="24.94" y="367.5" ></text>
+</g>
+<g >
+<title>ray_color (20,203,119,053 samples, 93.70%)</title><rect x="70.4" y="453" width="1105.8" height="15.0" fill="rgb(247,195,46)" rx="2" ry="2" />
+<text  x="73.43" y="463.5" >ray_color</text>
+</g>
+<g >
+<title>void std::__relocate_object_a&lt;Cube, Cube, std::allocator&lt;Cube&gt; &gt; (4,361,321 samples, 0.02%)</title><rect x="1189.8" y="421" width="0.2" height="15.0" fill="rgb(253,224,53)" rx="2" ry="2" />
+<text  x="1192.76" y="431.5" ></text>
+</g>
+<g >
+<title>std::__detail::_Adaptor&lt;std::mersenne_twister_engine&lt;unsigned long, 32ul, 624ul, 397ul, 31ul, 2567483615ul, 11ul, 4294967295ul, 7ul, 2636928640ul, 15ul, 4022730752ul, 18ul, 1812433253ul&gt;, float&gt;::operator (40,108,422 samples, 0.19%)</title><rect x="49.7" y="421" width="2.2" height="15.0" fill="rgb(209,21,5)" rx="2" ry="2" />
+<text  x="52.73" y="431.5" ></text>
+</g>
+<g >
+<title>[libxkbcommon.so.0.13.2] (40,032,862 samples, 0.19%)</title><rect x="16.8" y="533" width="2.1" height="15.0" fill="rgb(246,190,45)" rx="2" ry="2" />
+<text  x="19.76" y="543.5" ></text>
+</g>
+<g >
+<title>glm::vec&lt;3, float,  (338,224,204 samples, 1.57%)</title><rect x="51.9" y="453" width="18.5" height="15.0" fill="rgb(244,180,43)" rx="2" ry="2" />
+<text  x="54.92" y="463.5" ></text>
+</g>
+<g >
+<title>void std::swap&lt;float&gt; (40,139,985 samples, 0.19%)</title><rect x="382.5" y="389" width="2.2" height="15.0" fill="rgb(216,51,12)" rx="2" ry="2" />
+<text  x="385.54" y="399.5" ></text>
+</g>
+<g >
+<title>renderWorld (8,158,618 samples, 0.04%)</title><rect x="1176.2" y="453" width="0.4" height="15.0" fill="rgb(220,69,16)" rx="2" ry="2" />
+<text  x="1179.15" y="463.5" ></text>
+</g>
+<g >
+<title>glm::vec&lt;4, float,  (479,834,088 samples, 2.23%)</title><rect x="351.9" y="357" width="26.2" height="15.0" fill="rgb(237,150,36)" rx="2" ry="2" />
+<text  x="354.88" y="367.5" >g..</text>
+</g>
+<g >
+<title>std::plus&lt;float&gt;::operator (338,224,204 samples, 1.57%)</title><rect x="51.9" y="405" width="18.5" height="15.0" fill="rgb(210,23,5)" rx="2" ry="2" />
+<text  x="54.92" y="415.5" ></text>
+</g>
+<g >
+<title>std::vector&lt;Cube, std::allocator&lt;Cube&gt; &gt;::size (39,966,357 samples, 0.19%)</title><rect x="573.0" y="405" width="2.1" height="15.0" fill="rgb(240,161,38)" rx="2" ry="2" />
+<text  x="575.95" y="415.5" ></text>
+</g>
+<g >
+<title>_dl_catch_exception (21,191,472 samples, 0.10%)</title><rect x="21.9" y="149" width="1.2" height="15.0" fill="rgb(253,223,53)" rx="2" ry="2" />
+<text  x="24.94" y="159.5" ></text>
+</g>
+<g >
+<title>renderWorld (21,070,962,505 samples, 97.73%)</title><rect x="23.4" y="469" width="1153.2" height="15.0" fill="rgb(220,69,16)" rx="2" ry="2" />
+<text  x="26.38" y="479.5" >renderWorld</text>
+</g>
+<g >
+<title>pthread_once (21,191,472 samples, 0.10%)</title><rect x="21.9" y="325" width="1.2" height="15.0" fill="rgb(224,87,20)" rx="2" ry="2" />
+<text  x="24.94" y="335.5" ></text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (5,050,505 samples, 0.02%)</title><rect x="23.1" y="469" width="0.3" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="26.10" y="479.5" ></text>
+</g>
+<g >
+<title>[ld-linux-x86-64.so.2] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="133" width="1.2" height="15.0" fill="rgb(243,178,42)" rx="2" ry="2" />
+<text  x="24.94" y="143.5" ></text>
+</g>
+<g >
+<title>dlopen_implementation (21,191,472 samples, 0.10%)</title><rect x="21.9" y="245" width="1.2" height="15.0" fill="rgb(248,198,47)" rx="2" ry="2" />
+<text  x="24.94" y="255.5" ></text>
+</g>
+<g >
+<title>Bvh::intersect (79,694,820 samples, 0.37%)</title><rect x="225.6" y="405" width="4.3" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="228.55" y="415.5" ></text>
+</g>
+<g >
+<title>Bvh::requiresLinear (389,822,750 samples, 1.81%)</title><rect x="1117.5" y="421" width="21.3" height="15.0" fill="rgb(223,86,20)" rx="2" ry="2" />
+<text  x="1120.46" y="431.5" >B..</text>
+</g>
+<g >
+<title>glm::detail::compute_vec_add&lt;4, float,  (279,220,073 samples, 1.30%)</title><rect x="358.5" y="325" width="15.3" height="15.0" fill="rgb(250,208,49)" rx="2" ry="2" />
+<text  x="361.47" y="335.5" ></text>
+</g>
+<g >
+<title>_dl_catch_exception (21,191,472 samples, 0.10%)</title><rect x="21.9" y="117" width="1.2" height="15.0" fill="rgb(253,223,53)" rx="2" ry="2" />
+<text  x="24.94" y="127.5" ></text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="453" width="1.2" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="24.94" y="463.5" ></text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="421" width="1.2" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="24.94" y="431.5" ></text>
+</g>
+<g >
+<title>[libc.so.6] (21,342,099,070 samples, 98.99%)</title><rect x="21.9" y="549" width="1168.1" height="15.0" fill="rgb(223,84,20)" rx="2" ry="2" />
+<text  x="24.94" y="559.5" >[libc.so.6]</text>
+</g>
+<g >
+<title>[libc.so.6] (14,503,057 samples, 0.07%)</title><rect x="21.2" y="533" width="0.7" height="15.0" fill="rgb(223,84,20)" rx="2" ry="2" />
+<text  x="24.15" y="543.5" ></text>
+</g>
+<g >
+<title>[unknown]  (120,764,743 samples, 0.56%)</title><rect x="10.1" y="597" width="6.7" height="15.0" fill="rgb(253,223,53)" rx="2" ry="2" />
+<text  x="13.15" y="607.5" ></text>
+</g>
+<g >
+<title>dlopen (21,191,472 samples, 0.10%)</title><rect x="21.9" y="261" width="1.2" height="15.0" fill="rgb(216,51,12)" rx="2" ry="2" />
+<text  x="24.94" y="271.5" ></text>
+</g>
+<g >
+<title>[libc.so.6] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="181" width="1.2" height="15.0" fill="rgb(223,84,20)" rx="2" ry="2" />
+<text  x="24.94" y="191.5" ></text>
+</g>
+<g >
+<title>std::abs (40,155,372 samples, 0.19%)</title><rect x="557.6" y="405" width="2.2" height="15.0" fill="rgb(223,84,20)" rx="2" ry="2" />
+<text  x="560.59" y="415.5" ></text>
+</g>
+<g >
+<title>Cube::hit (2,828,818,652 samples, 13.12%)</title><rect x="229.9" y="405" width="154.8" height="15.0" fill="rgb(240,163,39)" rx="2" ry="2" />
+<text  x="232.91" y="415.5" >Cube::hit</text>
+</g>
+<g >
+<title>rve (21,560,347,757 samples, 100.00%)</title><rect x="10.0" y="613" width="1180.0" height="15.0" fill="rgb(212,34,8)" rx="2" ry="2" />
+<text  x="13.00" y="623.5" >rve</text>
+</g>
+<g >
+<title>float std::_V2::generate_canonical&lt;float, 24ul, std::mersenne_twister_engine&lt;unsigned long, 32ul, 624ul, 397ul, 31ul, 2567483615ul, 11ul, 4294967295ul, 7ul, 2636928640ul, 15ul, 4022730752ul, 18ul, 1812433253ul&gt; &gt; (40,108,422 samples, 0.19%)</title><rect x="49.7" y="405" width="2.2" height="15.0" fill="rgb(213,39,9)" rx="2" ry="2" />
+<text  x="52.73" y="415.5" ></text>
+</g>
+<g >
+<title>__libc_start_main (21,342,099,070 samples, 98.99%)</title><rect x="21.9" y="581" width="1168.1" height="15.0" fill="rgb(236,142,34)" rx="2" ry="2" />
+<text  x="24.94" y="591.5" >__libc_start_main</text>
+</g>
+<g >
+<title>std::plus&lt;float&gt;::operator (279,220,073 samples, 1.30%)</title><rect x="358.5" y="293" width="15.3" height="15.0" fill="rgb(210,23,5)" rx="2" ry="2" />
+<text  x="361.47" y="303.5" ></text>
+</g>
+<g >
+<title>World::add (4,361,321 samples, 0.02%)</title><rect x="1189.8" y="501" width="0.2" height="15.0" fill="rgb(236,144,34)" rx="2" ry="2" />
+<text  x="1192.76" y="511.5" ></text>
+</g>
+<g >
+<title>eglGetProcAddress (21,191,472 samples, 0.10%)</title><rect x="21.9" y="341" width="1.2" height="15.0" fill="rgb(241,166,39)" rx="2" ry="2" />
+<text  x="24.94" y="351.5" ></text>
+</g>
+<g >
+<title>dbus_message_append_args (5,050,505 samples, 0.02%)</title><rect x="23.1" y="421" width="0.3" height="15.0" fill="rgb(254,225,53)" rx="2" ry="2" />
+<text  x="26.10" y="431.5" ></text>
+</g>
+<g >
+<title>glm::detail::compute_normalize&lt;3, float,  (80,320,925 samples, 0.37%)</title><rect x="1145.4" y="421" width="4.4" height="15.0" fill="rgb(232,124,29)" rx="2" ry="2" />
+<text  x="1148.39" y="431.5" ></text>
+</g>
+<g >
+<title>glm::vec&lt;4, float,  (80,294,873 samples, 0.37%)</title><rect x="378.1" y="373" width="4.4" height="15.0" fill="rgb(237,150,36)" rx="2" ry="2" />
+<text  x="381.14" y="383.5" ></text>
+</g>
+<g >
+<title>glm::vec&lt;3, float,  (338,224,204 samples, 1.57%)</title><rect x="51.9" y="421" width="18.5" height="15.0" fill="rgb(244,180,43)" rx="2" ry="2" />
+<text  x="54.92" y="431.5" ></text>
+</g>
+<g >
+<title>[libnvidia-eglcore.so.615.78.08] (2,685,735 samples, 0.01%)</title><rect x="10.0" y="597" width="0.1" height="15.0" fill="rgb(217,55,13)" rx="2" ry="2" />
+<text  x="13.00" y="607.5" ></text>
+</g>
+<g >
+<title>std::isfinite (120,003,979 samples, 0.56%)</title><rect x="96.8" y="421" width="6.6" height="15.0" fill="rgb(226,100,24)" rx="2" ry="2" />
+<text  x="99.85" y="431.5" ></text>
+</g>
+<g >
+<title>_start (21,342,099,070 samples, 98.99%)</title><rect x="21.9" y="597" width="1168.1" height="15.0" fill="rgb(245,185,44)" rx="2" ry="2" />
+<text  x="24.94" y="607.5" >_start</text>
+</g>
+<g >
+<title>__vdso_clock_gettime (27,004,640 samples, 0.13%)</title><rect x="18.9" y="533" width="1.5" height="15.0" fill="rgb(254,226,54)" rx="2" ry="2" />
+<text  x="21.95" y="543.5" ></text>
+</g>
+<g >
+<title>float std::__generate_canonical_pow2&lt;float, 24ul, std::mersenne_twister_engine&lt;unsigned long, 32ul, 624ul, 397ul, 31ul, 2567483615ul, 11ul, 4294967295ul, 7ul, 2636928640ul, 15ul, 4022730752ul, 18ul, 1812433253ul&gt; &gt; (40,108,422 samples, 0.19%)</title><rect x="49.7" y="389" width="2.2" height="15.0" fill="rgb(231,123,29)" rx="2" ry="2" />
+<text  x="52.73" y="399.5" ></text>
+</g>
+<g >
+<title>[libxkbcommon.so.0.13.2] (40,032,862 samples, 0.19%)</title><rect x="16.8" y="517" width="2.1" height="15.0" fill="rgb(246,190,45)" rx="2" ry="2" />
+<text  x="19.76" y="527.5" ></text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (40,032,862 samples, 0.19%)</title><rect x="16.8" y="565" width="2.1" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="19.76" y="575.5" ></text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="389" width="1.2" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="24.94" y="399.5" ></text>
+</g>
+<g >
+<title>[libc.so.6] (14,503,057 samples, 0.07%)</title><rect x="21.2" y="517" width="0.7" height="15.0" fill="rgb(223,84,20)" rx="2" ry="2" />
+<text  x="24.15" y="527.5" ></text>
+</g>
+<g >
+<title>std::vector&lt;Cube, std::allocator&lt;Cube&gt; &gt;::push_back (4,361,321 samples, 0.02%)</title><rect x="1189.8" y="485" width="0.2" height="15.0" fill="rgb(253,224,53)" rx="2" ry="2" />
+<text  x="1192.76" y="495.5" ></text>
+</g>
+<g >
+<title>[libSDL2-2.0.so.0.3200.74] (21,191,472 samples, 0.10%)</title><rect x="21.9" y="469" width="1.2" height="15.0" fill="rgb(233,129,30)" rx="2" ry="2" />
+<text  x="24.94" y="479.5" ></text>
+</g>
+<g >
+<title>_ZSt12construct_atI4CubeJS0_EQaant20is_unbounded_array_vIT_ErqXgsnwcvPvLi0E_S1_pispcl7declvalIT0_EEEEEPS1_S4_DpOS3_ (4,361,321 samples, 0.02%)</title><rect x="1189.8" y="389" width="0.2" height="15.0" fill="rgb(216,50,12)" rx="2" ry="2" />
+<text  x="1192.76" y="399.5" ></text>
+</g>
+<g >
+<title>snprintf (14,503,057 samples, 0.07%)</title><rect x="21.2" y="549" width="0.7" height="15.0" fill="rgb(253,220,52)" rx="2" ry="2" />
+<text  x="24.15" y="559.5" ></text>
+</g>
+<g >
+<title>float glm::inversesqrt&lt;float&gt; (80,320,925 samples, 0.37%)</title><rect x="1145.4" y="405" width="4.4" height="15.0" fill="rgb(209,18,4)" rx="2" ry="2" />
+<text  x="1148.39" y="415.5" ></text>
+</g>
+<g >
+<title>HitRecord::HitRecord (80,285,831 samples, 0.37%)</title><rect x="384.7" y="405" width="4.4" height="15.0" fill="rgb(236,144,34)" rx="2" ry="2" />
+<text  x="387.73" y="415.5" ></text>
+</g>
+<g >
+<title>glm::vec&lt;4, float,  (359,360,573 samples, 1.67%)</title><rect x="358.5" y="341" width="19.6" height="15.0" fill="rgb(237,150,36)" rx="2" ry="2" />
+<text  x="361.47" y="351.5" ></text>
+</g>
+<g >
+<title>xkb_keymap_new_from_buffer (40,032,862 samples, 0.19%)</title><rect x="16.8" y="549" width="2.1" height="15.0" fill="rgb(235,142,34)" rx="2" ry="2" />
+<text  x="19.76" y="559.5" ></text>
+</g>
+<g >
+<title>std::vector&lt;Cube, std::allocator&lt;Cube&gt; &gt;::operator[] (40,189,172 samples, 0.19%)</title><rect x="570.8" y="405" width="2.2" height="15.0" fill="rgb(254,227,54)" rx="2" ry="2" />
+<text  x="573.75" y="415.5" ></text>
+</g>
+<g >
+<title>HitRecord::HitRecord (40,194,059 samples, 0.19%)</title><rect x="103.4" y="437" width="2.2" height="15.0" fill="rgb(236,144,34)" rx="2" ry="2" />
+<text  x="106.42" y="447.5" ></text>
+</g>
+<g >
+<title>[libSDL3.so.0.4.20] (5,050,505 samples, 0.02%)</title><rect x="23.1" y="453" width="0.3" height="15.0" fill="rgb(242,172,41)" rx="2" ry="2" />
+<text  x="26.10" y="463.5" ></text>
+</g>
+</g>
+</svg>

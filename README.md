@@ -67,10 +67,30 @@ run. Its default matrix has five material modes (the four materials plus
 20 runs. `50x50x50` is listed as an option but currently skipped by the driver
 because of runtime cost. Results go under `benchmark/results/`.
 
+The driver records user-space cycles at 99 Hz with `perf`'s
+`--user-callchains` option; both runs in the comparison use the same driver
+and seed. To check BVH intersections against the linear search, run:
+
+```sh
+make test
+```
+
+The BVH accelerates ray–cube intersection using world-space bounds. Rays that
+could encounter `Cube::hit`'s near-parallel slab behavior use the linear
+search instead. Checking distinct inverse transforms and checking saved model
+matrices after mutable iterator access can take linear time, so acceleration
+is not guaranteed for transformed or mutable worlds.
+
+On a 12th Gen Intel Core i5-12400F with 32 GiB RAM, running Omarchy on
+Hyprland/Wayland, the 20 seeded benchmark configurations measured a median
+11.0093× speedup (range 3.1576×–38.8529×). See the
+[full comparison](benchmark/results/bvh-comparison-20261116.md) and the
+[baseline](benchmark/results/2026-11-16-18:33:25/metadata.txt) and
+[BVH](benchmark/results/2026-11-16-18:54:55/metadata.txt) machine metadata.
+
 The committed profiling results are historical artifacts, not portable
 performance guarantees. Frame rates depend on the scene, renderer settings,
-CPU, compiler, and profiling overhead. No automated unit-test suite is
-currently included.
+CPU, compiler, and profiling overhead.
 
 ## Repository layout
 

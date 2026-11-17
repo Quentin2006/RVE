@@ -1,0 +1,32 @@
+=== System Information ===
+Seed       : 42
+12System:
+  12Kernel 7.2.15-1-omarchy 12arch x86_64 12bits 64
+  12Desktop Hyprland 12v 0.57.2 12Distro Omarchy
+12Memory:
+  12System RAM 12total 32 GiB 12available 31.15 GiB 12used 10.94 GiB (35.1%)
+  12Array-1 12capacity 256 GiB 12slots 4 12modules 2 12EC None
+  12Device-1 Controller0-DIMM0 12type no module installed
+  12Device-2 Controller0-DIMM1 12type DDR5 12size 16 GiB 12speed 5600 MT/s
+  12Device-3 Controller1-DIMM0 12type no module installed
+  12Device-4 Controller1-DIMM1 12type DDR5 12size 16 GiB 12speed 5600 MT/s
+12CPU:
+  12Info 6-core 12model 12th Gen Intel Core i5-12400F 12bits 64 12type MT MCP 12cache 12L2 7.5 MiB
+  12Speed (MHz) 12avg 1276 12min/max 800/4400 12cores 121 1276 122 1276 123 1276 124 1276 125 1276 126 1276 127 1276
+    128 1276 129 1276 1210 1276 1211 1276 1212 1276
+12Graphics:
+  12Device-1 NVIDIA GA104 [GeForce RTX 3060 Ti Lite Hash Rate] 12driver nvidia 12v 615.78.08
+  12Device-2 EMEET HD Webcam C950 12driver snd-usb-audio,uvcvideo 12type USB
+  12Display wayland 12server X.org 12v 1.21.1.26 12with Xwayland 12v 24.1.15 12compositor Hyprland 12v 0.57.2
+    12driver 12gpu nv_platform,nvidia,nvidia-nvswitch 12resolution 3440x1440~175Hz
+  12API EGL 12v 1.5 12drivers nvidia,swrast 12platforms gbm,wayland,x11,surfaceless,device
+  12API OpenGL 12v 4.6.0 12compat-v 4.6 12vendor nvidia mesa 12v 615.78.08 12renderer NVIDIA GeForce RTX
+    3060 Ti/PCIe/SSE2
+  12API Vulkan 12v 1.4.363 12drivers nvidia 12surfaces N/A
+  12Info 12Tools 12api eglinfo, glxinfo, vulkaninfo 12gpu lact,nvidia-smi 12x11 xprop,xrandr
+
+
+=== Benchmark Results ===
+Start Time : 2026-11-16-18:33:25
+End Time   : 2026-11-16-18:38:20
+Total Time : 0:04:55 seconds

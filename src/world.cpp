@@ -53,6 +53,7 @@ void World::generate(unsigned int seed, glm::ivec3 dims,
   }
 
   if (pool.empty()) {
+    buildBvh();
     return;
   }
 
@@ -102,6 +103,7 @@ void World::generate(unsigned int seed, glm::ivec3 dims,
                             static_cast<size_t>(dims.y) *
                             static_cast<size_t>(dims.z);
     if (capacity == 0) {
+      buildBvh();
       return;
     }
 
@@ -110,6 +112,7 @@ void World::generate(unsigned int seed, glm::ivec3 dims,
       std::cerr << "Error: requested " << *config.count
                 << " cubes but the grid only has " << capacity
                 << " slots, increase --size\n";
+      buildBvh();
       return;
     }
 
@@ -134,6 +137,7 @@ void World::generate(unsigned int seed, glm::ivec3 dims,
 
       add(make_cube(pool[pick_material(rng)], x, y, z));
     }
+    buildBvh();
     return;
   }
 
@@ -149,10 +153,44 @@ void World::generate(unsigned int seed, glm::ivec3 dims,
       }
     }
   }
+  buildBvh();
 }
 
 bool World::hit(const ray &r, float ray_min, float ray_max,
                 HitRecord &rec) const {
+  if (!bvh_dirty && !bvh.requiresLinear(r)) {
+    // A caller may retain a mutable iterator across buildBvh(), then use it
+    // to change a cube without calling begin()/end() again.
+    bool unchanged = true;
+    if (mutable_iterators_exposed) {
+      if (bvh_transforms.size() != world.size()) {
+        unchanged = false;
+      } else {
+        for (size_t i = 0; i < world.size(); ++i) {
+          if (bvh_transforms[i] != world[i].modelMatrixRef()) {
+            unchanged = false;
+            break;
+          }
+        }
+      }
+    }
+    if (unchanged) return bvh.hit(world, r, ray_min, ray_max, rec);
+  }
+  return hit_linear(r, ray_min, ray_max, rec);
+}
+
+void World::buildBvh() {
+  bvh.build(world);
+  bvh_transforms.clear();
+  if (mutable_iterators_exposed) {
+    bvh_transforms.reserve(world.size());
+    for (const Cube &cube : world) bvh_transforms.push_back(cube.modelMatrixRef());
+  }
+  bvh_dirty = false;
+}
+
+bool World::hit_linear(const ray &r, float ray_min, float ray_max,
+                       HitRecord &rec) const {
   bool hit_anything = false;
   float closest_t = ray_max;
 
@@ -190,6 +228,7 @@ bool World::loadFromFile(const std::string &filename) {
   // fuzz|refraction_index|brightness
 
   if (filename.empty()) {
+    buildBvh();
     return false;
   }
 
@@ -239,5 +278,6 @@ bool World::loadFromFile(const std::string &filename) {
     World::add(Cube(lineData));
   }
 
+  buildBvh();
   return true;
 }
